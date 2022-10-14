@@ -1,0 +1,84 @@
+package logic
+
+import (
+	"errors"
+	"go.uber.org/zap"
+	"shop-backend/dao/mysql"
+	"shop-backend/dao/redis"
+	"shop-backend/models"
+	"shop-backend/utils/check"
+	"shop-backend/utils/gen"
+)
+
+var (
+	ErrorUserIsRegistered    = errors.New("用户已注册，请直接登录")
+	ErrorMustRequestCode     = errors.New("请先获取验证码")
+	ErrorRequestCodeFrequent = errors.New("验证码已发送，请注意查收")
+	ErrorWrongVerifyCode     = errors.New("验证码错误")
+	ErrorPassWeak            = errors.New("密码强度太弱啦~")
+)
+
+// SendVerifyCode 生成验证码并缓存到Redis中
+func SendVerifyCode(phone string) (code string, err error) {
+	// 接口幂等性
+	code, err = redis.GetVerifyCode(phone)
+	if code != "" {
+		err = ErrorRequestCodeFrequent
+		zap.L().Error("users frequently get verification codes", zap.String("phone", phone))
+		return
+	}
+	if code, err = gen.GenVerifyCode(); err != nil {
+		// 生成验证码失败
+		zap.L().Error("utils.GenVerifyCode failed", zap.Error(err))
+		return
+	}
+	if err = redis.SetVerifyCode(phone, code); err != nil {
+		// 缓存到Redis失败
+		zap.L().Error("redis.SetVerifyCode failed", zap.Error(err))
+		return
+	}
+	return
+}
+
+// SignUp 用户注册逻辑
+func SignUp(u *models.ParamSignUp) error {
+	// 到此，用户手机号格式一定是正确的
+	// 如果用户已经注册
+	if ok := mysql.QueryOneUser(u.Phone); ok {
+		return ErrorUserIsRegistered
+	}
+	// 通过手机号从Redis获取验证码
+	niceCode, err := redis.GetVerifyCode(u.Phone)
+	if err != nil {
+		// 如果获取验证码失败
+		zap.L().Error("redis.GetVerifyCode(u.Phone) failed", zap.Error(err))
+		return err
+	}
+	if niceCode == "" {
+		return ErrorMustRequestCode
+	}
+
+	if u.Code != niceCode {
+		// 用户输入的验证码不正确
+		return ErrorWrongVerifyCode
+	}
+
+	// 校验密码强度
+	if err = check.CheckPass(u.Password); err != nil {
+		return ErrorPassWeak
+	}
+
+	// 生成uid
+	uid := gen.GenSnowflakeId()
+
+	// 构建user实例
+	user := &models.User{
+		UserID:   uid,
+		Phone:    u.Phone,
+		Password: u.Password,
+	}
+
+	// 入库
+	err = mysql.InsertUser(user)
+	return err
+}
