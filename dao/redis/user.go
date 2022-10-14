@@ -4,18 +4,23 @@ import (
 	"github.com/go-redis/redis"
 	"go.uber.org/zap"
 	"shop-backend/utils/concatstr"
+	"shop-backend/utils/gen"
+	"strconv"
 	"time"
 )
 
 var (
-	verifyCodeKey  = "user:"
+	userPrefix     = "user:"
+	verifyStr      = "verify:"
+	tokenStr       = "token:"
 	codeLivingTime = time.Minute * 5
 )
 
 // SetVerifyCode 将手机验证码存入Redis中，有效期五分钟
 func SetVerifyCode(phone, code string) (err error) {
-	key := concatstr.ConcatString(verifyCodeKey, phone)
+	key := concatstr.ConcatString(userPrefix, verifyStr, phone)
 	if err = rdb.Set(key, code, codeLivingTime).Err(); err != nil {
+		zap.L().Error("SetAccessToken failed", zap.Error(err))
 		return
 	}
 	return
@@ -23,13 +28,23 @@ func SetVerifyCode(phone, code string) (err error) {
 
 // GetVerifyCode 通过手机号获取验证码
 func GetVerifyCode(phone string) (code string, err error) {
-	key := concatstr.ConcatString(verifyCodeKey, phone)
+	key := concatstr.ConcatString(userPrefix, verifyStr, phone)
 	if code, err = rdb.Get(key).Result(); err != nil {
 		// 验证码已过期或不存在
 		if err == redis.Nil {
 			err = nil
 		}
 		zap.L().Error("rdb.Get(key).Result() failed", zap.Error(err))
+		return
+	}
+	return
+}
+
+// SetAccessToken 将AccessToken存入Redis中 K: userID V: aToken
+func SetAccessToken(userID int64, aToken string) (err error) {
+	key := concatstr.ConcatString(userPrefix, tokenStr, strconv.FormatInt(userID, 10))
+	if err = rdb.Set(key, aToken, gen.ATokenExpireDuration).Err(); err != nil {
+		zap.L().Error("SetAccessToken failed", zap.Error(err))
 		return
 	}
 	return

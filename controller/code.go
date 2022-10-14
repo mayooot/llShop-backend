@@ -13,6 +13,9 @@ const (
 	CodePassIsWeak
 	CodeRequestCodeFrequently
 	CodeUserIsRegistered
+	CodeTokenIsEmpty
+	CodeTokenIsWrongFormat
+	CodeTokenIsInvalid
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -27,6 +30,9 @@ var codeMsgMap = map[ResCode]string{
 	CodePassIsWeak:            "密码强度太弱啦~🤗",
 	CodeRequestCodeFrequently: "验证码已发送，请注意查收~🐹",
 	CodeUserIsRegistered:      "用户已注册，请直接登录👻",
+	CodeTokenIsEmpty:          "请求未携带Token",
+	CodeTokenIsWrongFormat:    "携带Token的格式有误",
+	CodeTokenIsInvalid:        "非法Token",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息

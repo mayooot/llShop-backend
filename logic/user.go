@@ -2,6 +2,7 @@ package logic
 
 import (
 	"errors"
+	"github.com/DanPlayer/randomname"
 	"go.uber.org/zap"
 	"shop-backend/dao/mysql"
 	"shop-backend/dao/redis"
@@ -16,6 +17,9 @@ var (
 	ErrorRequestCodeFrequent = errors.New("验证码已发送，请注意查收")
 	ErrorWrongVerifyCode     = errors.New("验证码错误")
 	ErrorPassWeak            = errors.New("密码强度太弱啦~")
+	ErrorUserNotExist        = errors.New("用户不存在~")
+	ErrorWrongPass           = errors.New("密码错误")
+	ErrorServeBusy           = errors.New("服务器繁忙")
 )
 
 // SendVerifyCode 生成验证码并缓存到Redis中
@@ -44,7 +48,7 @@ func SendVerifyCode(phone string) (code string, err error) {
 func SignUp(u *models.ParamSignUp) error {
 	// 到此，用户手机号格式一定是正确的
 	// 如果用户已经注册
-	if ok := mysql.QueryOneUser(u.Phone); ok {
+	if _, ok := mysql.QueryOneUserByPhone(u.Phone); ok {
 		return ErrorUserIsRegistered
 	}
 	// 通过手机号从Redis获取验证码
@@ -73,7 +77,9 @@ func SignUp(u *models.ParamSignUp) error {
 
 	// 构建user实例
 	user := &models.User{
-		UserID:   uid,
+		UserID: uid,
+		// 随机生成用户名
+		Username: randomname.GenerateName(),
 		Phone:    u.Phone,
 		Password: u.Password,
 	}
@@ -81,4 +87,48 @@ func SignUp(u *models.ParamSignUp) error {
 	// 入库
 	err = mysql.InsertUser(user)
 	return err
+}
+
+// Login 登录逻辑
+func Login(p *models.ParamLogin) (uid int64, aToken, rToken string, err error) {
+	var ok bool
+	uid, ok = mysql.QueryOneUserByPhone(p.Phone)
+	if !ok {
+		// 如果用户不存在
+		err = ErrorUserNotExist
+		return
+	}
+
+	// 构建User实例
+	user := &models.User{
+		Phone:    p.Phone,
+		Password: p.Password,
+	}
+
+	if ok := mysql.QueryOneUserByPhoneAndPass(user); !ok {
+		// 用户输入密码错误
+		err = ErrorWrongPass
+		return
+	}
+
+	// 用户校验通过，生成AccessToken和RefreshToken
+	aToken, rToken, err = gen.GenToken(user.UserID, user.Phone)
+
+	// 将AccessToken缓存到Redis中，用来完成同一时间只有一台设备可以登录
+	err = redis.SetAccessToken(user.UserID, aToken)
+	if err != nil {
+		// 插入AccessToken失败
+		err = ErrorServeBusy
+		return
+	}
+	return
+}
+
+// GetSomeInfo 返回简略信息
+func GetSomeInfo(uid int64) (info *models.SomeInfo, err error) {
+	// 此时info已经有了用户头像和用户名
+	info, err = mysql.QuerySomeInfoByUID(uid)
+	// todo 获取用户购物车中的商城数量
+	info.CartNum = 1
+	return
 }
