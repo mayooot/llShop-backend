@@ -14,3 +14,13 @@ type ParamLogin struct {
 	Phone    string `json:"phone" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
+
+// ParamInfos 封装用户信息的请求体
+type ParamInfos struct {
+	Id       string `json:"id" binding:"required"`
+	Username string `json:"username" binding:"required"`
+	Phone    string `json:"phone" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	Avatar   string `json:"avatar" binding:"required"`
+	Gender   string `json:"gender" binding:"required"`
+}

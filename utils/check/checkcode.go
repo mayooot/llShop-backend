@@ -10,3 +10,18 @@ func VerifyMobileFormat(mobileNum string) bool {
 	reg := regexp.MustCompile(regular)
 	return reg.MatchString(mobileNum)
 }
+
+// VerifyEmailFormat 校验电子邮箱格式是否正确
+func VerifyEmailFormat(email string) bool {
+	pattern := `^[0-9a-z][_.0-9a-z-]{0,31}@([0-9a-z][0-9a-z-]{0,30}[0-9a-z]\.){1,4}[a-z]{2,4}$`
+	reg := regexp.MustCompile(pattern)
+	return reg.MatchString(email)
+}
+
+// VerifyUsernameFormat 校验用户名长度
+func VerifyUsernameFormat(username string) bool {
+	if len(username) >= 5 && len(username) <= 18 {
+		return true
+	}
+	return false
+}

@@ -8,6 +8,7 @@ const (
 	CodeServeBusy       ResCode = 500
 	CodePhoneIsNotEmpty ResCode = 1000 + iota
 	CodePhoneFormatError
+	CodeEmailFormatError
 	CodeInvalidParams
 	CodeWrongVerifyCode
 	CodePassIsWeak
@@ -16,23 +17,28 @@ const (
 	CodeTokenIsEmpty
 	CodeTokenIsWrongFormat
 	CodeTokenIsInvalid
+	CodeUpdateInfosFailed
+	CodeUsernameToLongOrToShort
 )
 
 // map字典 K: 错误码	V: 错误信息
 var codeMsgMap = map[ResCode]string{
 
-	CodeSuccess:               "success",
-	CodeServeBusy:             "服务器繁忙，等会再试试吧~🧸",
-	CodePhoneIsNotEmpty:       "手机号未输入或为空❌",
-	CodePhoneFormatError:      "手机号格式错误❌",
-	CodeInvalidParams:         "请求参数格式错误❌",
-	CodeWrongVerifyCode:       "验证码错误或已过期❌",
-	CodePassIsWeak:            "密码强度太弱啦~🤗",
-	CodeRequestCodeFrequently: "验证码已发送，请注意查收~🐹",
-	CodeUserIsRegistered:      "用户已注册，请直接登录👻",
-	CodeTokenIsEmpty:          "请求未携带Token",
-	CodeTokenIsWrongFormat:    "携带Token的格式有误",
-	CodeTokenIsInvalid:        "非法Token",
+	CodeSuccess:                 "success",
+	CodeServeBusy:               "服务器繁忙，等会再试试吧~🧸",
+	CodePhoneIsNotEmpty:         "手机号未输入或为空❌",
+	CodePhoneFormatError:        "手机号格式错误❌",
+	CodeEmailFormatError:        "手机号格式错误❌",
+	CodeInvalidParams:           "请求参数有误❌",
+	CodeWrongVerifyCode:         "验证码错误或已过期❌",
+	CodePassIsWeak:              "密码强度太弱啦~🤗",
+	CodeRequestCodeFrequently:   "验证码已发送，请注意查收~🐹",
+	CodeUserIsRegistered:        "用户已注册，请直接登录👻",
+	CodeTokenIsEmpty:            "请求未携带Token❌",
+	CodeTokenIsWrongFormat:      "携带Token的格式有误❌",
+	CodeTokenIsInvalid:          "非法Token❌",
+	CodeUpdateInfosFailed:       "更新个人资料失败，请稍后再试😪",
+	CodeUsernameToLongOrToShort: "用户名太长或太短😥",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息

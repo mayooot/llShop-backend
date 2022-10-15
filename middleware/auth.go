@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"shop-backend/controller"
 	"shop-backend/utils/check"
+	"strconv"
 	"strings"
 )
 
@@ -42,7 +43,9 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 			return
 		}
 		// 将当前请求的UserID信息保存到请求的上下文中
-		c.Set(CtxUserIdKey, mc.UserId)
+		// 将uid转换成string
+		uidStr := strconv.FormatInt(mc.UserId, 10)
+		c.Set(CtxUserIdKey, uidStr)
 		c.Set(CtxAToken, parts[1])
 		// 后续的请求可以通过c.Get(CtxUserIdKey)来获取当前请求的用户信息
 		c.Next()

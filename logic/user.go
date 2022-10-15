@@ -132,3 +132,14 @@ func GetSomeInfo(uid int64) (info *models.SomeInfo, err error) {
 	info.CartNum = 1
 	return
 }
+
+// GetUserInfos 获取用户详细信息
+// todo 邮箱登录功能未实现
+func GetUserInfos(uid int64) (infos *models.UserInfos, err error) {
+	return mysql.QueryInfosByUID(uid)
+}
+
+// UpdateInfos 更新用户信息
+func UpdateInfos(infos *models.ParamInfos) (err error) {
+	return mysql.UpdateUserInfosByUID(infos)
+}

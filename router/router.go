@@ -37,8 +37,10 @@ func SetupRouter(mode string) *gin.Engine {
 	{
 		// 获取用户简略信息，用于商城header显示
 		v2.GET("/someinfo/:id", controller.SomeInfoHandler)
-		// 获取用户个人信息
-		v2.GET("/infos")
+		// 获取用户个人信息，用于个人资料显示
+		v2.GET("/infos/:id", controller.UserInfosHandler)
+		// 用户修改个人资料
+		v2.PUT("/infos/update", controller.UserInfosUpdateHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

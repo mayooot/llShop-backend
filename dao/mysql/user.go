@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"go.uber.org/zap"
 	"shop-backend/models"
+	"strconv"
 )
 
 // 数据加密秘钥
@@ -59,6 +60,30 @@ func QuerySomeInfoByUID(uid int64) (info *models.SomeInfo, err error) {
 	info = new(models.SomeInfo)
 	sqlStr := `select username, avatar from user where user_id = ?`
 	err = db.Get(info, sqlStr, uid)
+	return
+}
+
+// QueryInfosByUID 查询用户详细信
+func QueryInfosByUID(uid int64) (infos *models.UserInfos, err error) {
+	infos = new(models.UserInfos)
+	sqlStr := `select 
+					user_id, username, phone, email, avatar, gender, create_time
+				from user
+				where user_id = ?`
+	err = db.Get(infos, sqlStr, uid)
+	return
+}
+
+// UpdateUserInfosByUID 修改用户个人信息
+func UpdateUserInfosByUID(infos *models.ParamInfos) (err error) {
+	sqlStr := `update user
+					set username = ?, phone = ?, email = ?, avatar = ?, gender = ?
+				where user_id = ? `
+	// uid字符串转成int64，因为controller层已经判断前端传递的uid是否和JWT中间件存储的uid是否相同
+	// 所有这里可以忽略类型转换的err
+	uid, _ := strconv.ParseInt(infos.Id, 10, 64)
+	gender, _ := strconv.ParseInt(infos.Gender, 10, 8)
+	_, err = db.Exec(sqlStr, infos.Username, infos.Phone, infos.Email, infos.Avatar, gender, uid)
 	return
 }
 

@@ -127,3 +127,63 @@ func SomeInfoHandler(c *gin.Context) {
 	}
 	ResponseSuccess(c, infos)
 }
+
+// UserInfosHandler 获取用户详细的个人信息
+func UserInfosHandler(c *gin.Context) {
+	// 获取用户id
+	idStr := c.Param("id")
+	// 字符串转为int64
+	uid, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		ResponseError(c, CodeInvalidParams)
+		return
+	}
+
+	infos, err := logic.GetUserInfos(uid)
+	if err != nil {
+		ResponseError(c, CodeServeBusy)
+		return
+	}
+	ResponseSuccess(c, infos)
+}
+
+// UserInfosUpdateHandler 用户修改个人资料
+func UserInfosUpdateHandler(c *gin.Context) {
+	infos := new(models.ParamInfos)
+	if err := c.ShouldBindJSON(infos); err != nil {
+		// 请求参数有误
+		ResponseError(c, CodeInvalidParams)
+		return
+	}
+	if _, err := strconv.ParseInt(infos.Gender, 10, 8); err != nil {
+		// 校验性别字符串
+		ResponseError(c, CodeInvalidParams)
+		return
+	}
+	if infos.Id != c.GetString("uid") {
+		// 如果用户传递的uid和上一步校验jwt中间件中的uid不同
+		// 请求参数有误
+		ResponseError(c, CodeServeBusy)
+		return
+	}
+
+	// 参数格式校验
+	if !check.VerifyUsernameFormat(infos.Username) {
+		ResponseError(c, CodeUsernameToLongOrToShort)
+		return
+	}
+	if !check.VerifyMobileFormat(infos.Phone) {
+		ResponseError(c, CodePhoneFormatError)
+		return
+	}
+	if !check.VerifyEmailFormat(infos.Email) {
+		ResponseError(c, CodeEmailFormatError)
+		return
+	}
+
+	err := logic.UpdateInfos(infos)
+	if err != nil {
+		ResponseError(c, CodeUpdateInfosFailed)
+	}
+	ResponseSuccessWithMsg(c, "更新成功", infos)
+}
