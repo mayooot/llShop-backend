@@ -7,6 +7,8 @@ import (
 	"shop-backend/utils/gen"
 )
 
+var ErrorATokenExpired = errors.New("token已过期")
+
 // CheckAToken 解析AToken
 func CheckAToken(tokenString string) (claims *gen.MyClaims, err error) {
 	// 初始化claims
@@ -16,6 +18,11 @@ func CheckAToken(tokenString string) (claims *gen.MyClaims, err error) {
 	token, err = jwt.ParseWithClaims(tokenString, claims, gen.GetSecret())
 
 	if err != nil {
+		v, ok := err.(*jwt.ValidationError)
+		if ok && v.Errors == jwt.ValidationErrorExpired {
+			// 如果是Token过期错误
+			return nil, ErrorATokenExpired
+		}
 		// 解析错误
 		zap.L().Error("jwt.ParseWithClaims failed",
 			zap.Error(err),

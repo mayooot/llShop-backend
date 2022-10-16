@@ -5,6 +5,7 @@ import (
 	"shop-backend/controller"
 	"shop-backend/dao/redis"
 	"shop-backend/utils/check"
+	"shop-backend/utils/gen"
 	"strconv"
 	"strings"
 )
@@ -38,6 +39,12 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		// 解析前端传递的Token
 		mc, err := check.CheckAToken(parts[1])
 		if err != nil {
+			if err == check.ErrorATokenExpired {
+				// Token过期错误
+				controller.ResponseError(c, controller.CodeTokenExpire)
+				c.Abort()
+				return
+			}
 			// 解析失败，Token不合法
 			controller.ResponseError(c, controller.CodeTokenIsInvalid)
 			c.Abort()
@@ -78,6 +85,61 @@ func JWTLimitLoginMiddleware() func(c *gin.Context) {
 			c.Abort()
 			return
 		}
+		c.Next()
+	}
+}
+
+// JWTAuthRefreshMiddleware 刷新AccessToken
+func JWTAuthRefreshMiddleware() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		authHeader := c.Request.Header.Get("Authorization")
+		if authHeader == "" {
+			controller.ResponseError(c, controller.CodeTokenIsEmpty)
+			c.Abort()
+			return
+		}
+		// 按照空格进行分割
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			controller.ResponseError(c, controller.CodeTokenIsWrongFormat)
+			c.Abort()
+			return
+		}
+		// 前端传递过来的两个Token使用&拼接
+		tokens := strings.SplitN(parts[1], "&", 2)
+		if len(tokens) != 2 {
+			controller.ResponseError(c, controller.CodeTokenIsWrongFormat)
+			c.Abort()
+			return
+		}
+		aToken, err := gen.RefreshToken(tokens[0], tokens[1])
+		if err != nil {
+			controller.ResponseError(c, controller.CodeTokenRefreshFailed)
+			c.Abort()
+			return
+		}
+		if aToken == "" {
+			controller.ResponseError(c, controller.CodeAccessTokenIsLiving)
+			c.Abort()
+			return
+		}
+		controller.ResponseSuccess(c, gin.H{
+			"AccessToken": aToken,
+		})
+		c.Next()
+	}
+}
+
+// JWTCheckUID 检查前端传递的用户ID是否和JWTAuthMiddleware存储的ID相同
+func JWTCheckUID() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		idStr := c.Param("id")
+		if idStr != c.GetString("uid") {
+			controller.ResponseError(c, controller.CodeServeBusy)
+			c.Abort()
+			return
+		}
+
 		c.Next()
 	}
 }

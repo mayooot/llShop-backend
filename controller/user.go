@@ -119,12 +119,6 @@ func LoginHandler(c *gin.Context) {
 func SomeInfoHandler(c *gin.Context) {
 	// 获取用户id
 	idStr := c.Param("id")
-	if idStr != c.GetString("uid") {
-		// 如果用户传递的uid和上一步校验jwt中间件中的uid不同
-		// 请求参数有误
-		ResponseError(c, CodeServeBusy)
-		return
-	}
 	// 将字符串转成int64
 	uid, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -145,12 +139,6 @@ func SomeInfoHandler(c *gin.Context) {
 func UserInfosHandler(c *gin.Context) {
 	// 获取用户id
 	idStr := c.Param("id")
-	if idStr != c.GetString("uid") {
-		// 如果用户传递的uid和上一步校验jwt中间件中的uid不同
-		// 请求参数有误
-		ResponseError(c, CodeServeBusy)
-		return
-	}
 	// 字符串转为int64
 	uid, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -210,12 +198,6 @@ func UserInfosUpdateHandler(c *gin.Context) {
 // SignOutHandler 用户退出
 func SignOutHandler(c *gin.Context) {
 	idStr := c.Param("id")
-	if idStr != c.GetString("uid") {
-		// 如果用户传递的uid和上一步校验jwt中间件中的uid不同
-		// 请求参数有误
-		ResponseError(c, CodeServeBusy)
-		return
-	}
 	err := logic.SignOut(idStr)
 	if err != nil {
 		ResponseError(c, CodeSignOutFailed)

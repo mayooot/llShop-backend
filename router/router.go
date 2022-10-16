@@ -18,7 +18,9 @@ func SetupRouter(mode string) *gin.Engine {
 	}
 
 	r := gin.New()
+	// 添加跨域、日志、恢复中间件
 	r.Use(middleware.Cors(), logger.GinLogger(), logger.GinRecovery(true))
+	// swagger接口文档路由
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// v1路由组不使用校验JWT中间件
 	v1 := r.Group("/api/v1")
@@ -37,13 +39,20 @@ func SetupRouter(mode string) *gin.Engine {
 
 	// v2路由组使用校验JWT中间件
 	v2 := r.Group("/api/v1")
+	// 刷新AccessToken
+	v2.PUT("refreshToken/:id", middleware.JWTAuthRefreshMiddleware())
+	// 添加校验JWT、限制终端设备中间件
 	v2.Use(middleware.JWTAuthMiddleware(), middleware.JWTLimitLoginMiddleware())
 	{
-		v2.DELETE("/exit:id", controller.SignOutHandler)
-		// 获取用户简略信息，用于商城header显示
-		v2.GET("/someinfo/:id", controller.SomeInfoHandler)
-		// 获取用户个人信息，用于个人资料显示
-		v2.GET("/infos/:id", controller.UserInfosHandler)
+		v3 := v2.Use(middleware.JWTCheckUID())
+		{
+			v3.DELETE("/exit:id", controller.SignOutHandler)
+			// 获取用户简略信息，用于商城header显示
+			v3.GET("/someinfo/:id", controller.SomeInfoHandler)
+			// 获取用户个人信息，用于个人资料显示
+			v3.GET("/infos/:id", controller.UserInfosHandler)
+		}
+
 		// 用户修改个人资料
 		v2.PUT("/infos/update", controller.UserInfosUpdateHandler)
 	}

@@ -21,6 +21,9 @@ const (
 	CodeUsernameToLongOrToShort
 	CodeExceedMaxTerminalNum
 	CodeSignOutFailed
+	CodeTokenRefreshFailed
+	CodeAccessTokenIsLiving
+	CodeTokenExpire
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -43,6 +46,9 @@ var codeMsgMap = map[ResCode]string{
 	CodeUsernameToLongOrToShort: "用户名太长或太短😥",
 	CodeExceedMaxTerminalNum:    "超过最大登录终端数量",
 	CodeSignOutFailed:           "退出失败，等会再试试吧😪",
+	CodeTokenRefreshFailed:      "刷新Token失败",
+	CodeAccessTokenIsLiving:     "AccessToken未过期，刷新Token失败",
+	CodeTokenExpire:             "token已过期",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息

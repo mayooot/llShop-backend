@@ -1,13 +1,14 @@
 package gen
 
 import (
+	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"go.uber.org/zap"
 	"time"
 )
 
-// ATokenExpireDuration AToken存活时间，7天
-const ATokenExpireDuration = time.Hour * 24 * 7
+// ATokenExpireDuration AToken存活时间，1个小时
+const ATokenExpireDuration = time.Minute
 
 // RTokenExpireDuration AToken存活时间，30天
 const RTokenExpireDuration = time.Hour * 24 * 30
@@ -61,9 +62,49 @@ func GenToken(userId int64, phone string) (aToken string, rToken string, err err
 	return
 }
 
+// ParseToken 解析Token
+func ParseToken(tokenString string) (claims *MyClaims, err error) {
+	// 初始化claims
+	claims = new(MyClaims)
+	var token *jwt.Token
+	// 解析token
+	token, err = jwt.ParseWithClaims(tokenString, claims, GetSecret())
+
+	if err != nil {
+		return
+	}
+	// 校验token
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+	return claims, nil
+}
+
 // GetSecret 返回自定义秘钥
 func GetSecret() func(*jwt.Token) (interface{}, error) {
 	return func(token *jwt.Token) (interface{}, error) {
 		return mySecret, nil
 	}
+}
+
+// RefreshToken 刷新AccessToken
+func RefreshToken(aToken, rToken string) (newAToken string, err error) {
+	if _, err = jwt.Parse(rToken, GetSecret()); err != nil {
+		// RefreshToken已经失效或错误，那么就不能用来刷新AccessToken
+		return
+	}
+	// 解析AccessToken
+	var claims *MyClaims
+	claims, err = ParseToken(aToken)
+	v, ok := err.(*jwt.ValidationError)
+	if !ok {
+		// 如果不是ValidationError类型的错误
+		return
+	}
+	if v.Errors == jwt.ValidationErrorExpired {
+		// 如果AccessToke是过期错误，且RefreshToken没有过期。创建一个新的AccessToken返回
+		newAToken, _, err = GenToken(claims.UserId, claims.Phone)
+		return
+	}
+	return
 }
