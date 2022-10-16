@@ -12,6 +12,12 @@ import (
 )
 
 // SendVerifyCodeHandler 发送手机验证码，并返回
+// @Summary 获取验证码
+// @Description 前端传递11位手机号，后端随机生成4位验证码。存入Redis，并异步调用阿里云SMS服务发送验证码。
+// @Tags 用户相关接口
+// @Produce  json
+// @Param phone query string true "手机号"
+// @Router /phone [get]
 func SendVerifyCodeHandler(c *gin.Context) {
 	// 获取参数
 	phone := c.Query("phone")
@@ -48,6 +54,12 @@ func SendVerifyCodeHandler(c *gin.Context) {
 }
 
 // SignUpHandler 用户注册
+// @Summary 注册用户
+// @Description 前端传递JSON类型对象，后端完成校验后注册新用户。
+// @Tags 用户相关接口
+// @Produce json
+// @Param param body models.ParamSignUp true "验证码"
+// @Router /signup [post]
 func SignUpHandler(c *gin.Context) {
 	// 获取参数并校验
 	p := new(models.ParamSignUp)

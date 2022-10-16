@@ -18,7 +18,13 @@ import (
 	"time"
 )
 
-// Go Web开发脚手架模板
+// @title llShop-backend
+// @version 1.0
+// @description llShop后端接口API
+// @license.name Apache 2.0
+// @termsOfService https://github.com/mayooot/llShop-backend
+// @host  y8ccqm.natappfree.cc
+// @BasePath /api/v1
 func main() {
 	// 1. 加载配置
 	if err := settings.Init(); err != nil {

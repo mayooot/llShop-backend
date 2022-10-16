@@ -2,8 +2,11 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
 	"shop-backend/controller"
+	_ "shop-backend/docs"
 	"shop-backend/logger"
 	"shop-backend/middleware"
 )
@@ -15,12 +18,13 @@ func SetupRouter(mode string) *gin.Engine {
 	}
 
 	r := gin.New()
-	r.Use(logger.GinLogger(), logger.GinRecovery(true))
+	r.Use(middleware.Cors(), logger.GinLogger(), logger.GinRecovery(true))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// v1路由组不使用校验JWT中间件
 	v1 := r.Group("/api/v1")
 	{
 		// 获取验证码
-		v1.POST("/phone", controller.SendVerifyCodeHandler)
+		v1.GET("/phone", controller.SendVerifyCodeHandler)
 		// 注册
 		v1.POST("/signup", controller.SignUpHandler)
 		// 登录

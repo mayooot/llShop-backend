@@ -7,12 +7,7 @@ import (
 
 var node *snowflake.Node
 
-// Init
-//
-//	@Description: 雪花算法初始化
-//	@param startTime 起始时间，从这个时间开始算起，可以使用雪花ID可以使用69年
-//	@param machineId 机器ID
-//	@return err
+// Init 雪花算法初始化
 func Init(startTime string, machineId int64) (err error) {
 	var st time.Time
 	// time.Parse()解析一个格式化的时间字符串并返回它代表的时间。layout定义了参考时间
