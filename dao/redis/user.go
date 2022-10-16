@@ -49,3 +49,26 @@ func SetAccessToken(userID int64, aToken string) (err error) {
 	}
 	return
 }
+
+// GetAccessTokenByUID 通过userID从Redis中获取对应的Access Token
+func GetAccessTokenByUID(uid string) (token string, err error) {
+	key := concatstr.ConcatString(userPrefix, tokenStr, uid)
+	token, err = rdb.Get(key).Result()
+	if err != nil {
+		return
+	}
+	return
+}
+
+// DelAccessTokenByUID 根据uid删除AccessToken
+func DelAccessTokenByUID(idStr string) (err error) {
+	key := concatstr.ConcatString(userPrefix, tokenStr, idStr)
+	_, err = rdb.Del(key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			err = nil
+			return
+		}
+	}
+	return
+}

@@ -143,3 +143,9 @@ func GetUserInfos(uid int64) (infos *models.UserInfos, err error) {
 func UpdateInfos(infos *models.ParamInfos) (err error) {
 	return mysql.UpdateUserInfosByUID(infos)
 }
+
+// SignOut 用户退出操作，删除Redis中保存的AccessToken
+func SignOut(idStr string) (err error) {
+	err = redis.DelAccessTokenByUID(idStr)
+	return
+}

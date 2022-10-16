@@ -3,6 +3,7 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"shop-backend/controller"
+	"shop-backend/dao/redis"
 	"shop-backend/utils/check"
 	"strconv"
 	"strings"
@@ -48,6 +49,35 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		c.Set(CtxUserIdKey, uidStr)
 		c.Set(CtxAToken, parts[1])
 		// 后续的请求可以通过c.Get(CtxUserIdKey)来获取当前请求的用户信息
+		c.Next()
+	}
+}
+
+// JWTLimitLoginMiddleware 限制同一账号同一时间只能一台设备登录
+func JWTLimitLoginMiddleware() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		// 从Redis中获取AccessToken
+		token, err := redis.GetAccessTokenByUID(c.GetString(CtxUserIdKey))
+		if err != nil {
+			// 获取失败
+			controller.ResponseError(c, controller.CodeServeBusy)
+			c.Abort()
+			return
+		}
+		// 获取上一步JWT存储的AccessToken
+		aToken, ok := c.Get(CtxAToken)
+		if !ok {
+			// 获取失败
+			controller.ResponseError(c, controller.CodeServeBusy)
+			c.Abort()
+			return
+		}
+		if aToken != token {
+			// 如果两次AccessToken不同，说明超过最大登录终端数量
+			controller.ResponseError(c, controller.CodeExceedMaxTerminalNum)
+			c.Abort()
+			return
+		}
 		c.Next()
 	}
 }

@@ -37,8 +37,9 @@ func SetupRouter(mode string) *gin.Engine {
 
 	// v2路由组使用校验JWT中间件
 	v2 := r.Group("/api/v1")
-	v2.Use(middleware.JWTAuthMiddleware())
+	v2.Use(middleware.JWTAuthMiddleware(), middleware.JWTLimitLoginMiddleware())
 	{
+		v2.DELETE("/exit:id", controller.SignOutHandler)
 		// 获取用户简略信息，用于商城header显示
 		v2.GET("/someinfo/:id", controller.SomeInfoHandler)
 		// 获取用户个人信息，用于个人资料显示

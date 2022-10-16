@@ -43,11 +43,6 @@ func SendVerifyCodeHandler(c *gin.Context) {
 		ResponseError(c, CodeServeBusy)
 		return
 	}
-
-	// ResponseSuccessWithMsg(c, gin.H{
-	// 	"code": code,
-	// }, nil)
-
 	ResponseSuccessWithMsg(c, "发送成功，验证码五分钟内有效", gin.H{
 		"code": code,
 	})
@@ -123,9 +118,15 @@ func LoginHandler(c *gin.Context) {
 // SomeInfoHandler 获取用户头像、用户名和购物车数量
 func SomeInfoHandler(c *gin.Context) {
 	// 获取用户id
-	uidStr := c.Param("id")
+	idStr := c.Param("id")
+	if idStr != c.GetString("uid") {
+		// 如果用户传递的uid和上一步校验jwt中间件中的uid不同
+		// 请求参数有误
+		ResponseError(c, CodeServeBusy)
+		return
+	}
 	// 将字符串转成int64
-	uid, err := strconv.ParseInt(uidStr, 10, 64)
+	uid, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		ResponseError(c, CodeInvalidParams)
 		return
@@ -144,6 +145,12 @@ func SomeInfoHandler(c *gin.Context) {
 func UserInfosHandler(c *gin.Context) {
 	// 获取用户id
 	idStr := c.Param("id")
+	if idStr != c.GetString("uid") {
+		// 如果用户传递的uid和上一步校验jwt中间件中的uid不同
+		// 请求参数有误
+		ResponseError(c, CodeServeBusy)
+		return
+	}
 	// 字符串转为int64
 	uid, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -198,4 +205,21 @@ func UserInfosUpdateHandler(c *gin.Context) {
 		ResponseError(c, CodeUpdateInfosFailed)
 	}
 	ResponseSuccessWithMsg(c, "更新成功", infos)
+}
+
+// SignOutHandler 用户退出
+func SignOutHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	if idStr != c.GetString("uid") {
+		// 如果用户传递的uid和上一步校验jwt中间件中的uid不同
+		// 请求参数有误
+		ResponseError(c, CodeServeBusy)
+		return
+	}
+	err := logic.SignOut(idStr)
+	if err != nil {
+		ResponseError(c, CodeSignOutFailed)
+		return
+	}
+	ResponseSuccessWithMsg(c, "退出成功", nil)
 }
