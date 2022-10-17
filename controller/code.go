@@ -24,6 +24,7 @@ const (
 	CodeTokenRefreshFailed
 	CodeAccessTokenIsLiving
 	CodeTokenExpire
+	CodeUsernameOrPassError
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -49,6 +50,7 @@ var codeMsgMap = map[ResCode]string{
 	CodeTokenRefreshFailed:      "刷新Token失败",
 	CodeAccessTokenIsLiving:     "AccessToken未过期，刷新Token失败",
 	CodeTokenExpire:             "token已过期",
+	CodeUsernameOrPassError:     "账户或密码错误🥵",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息

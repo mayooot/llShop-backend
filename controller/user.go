@@ -53,7 +53,7 @@ func SendVerifyCodeHandler(c *gin.Context) {
 // @Description 前端传递JSON类型对象，后端完成校验后注册新用户。
 // @Tags 用户相关接口
 // @Produce json
-// @Param param body models.ParamSignUp true "验证码"
+// @Param ParamSignUp body models.ParamSignUp true "用户注册结构体"
 // @Router /signup [post]
 func SignUpHandler(c *gin.Context) {
 	// 获取参数并校验
@@ -93,6 +93,12 @@ func SignUpHandler(c *gin.Context) {
 }
 
 // LoginHandler 用户登录
+// @Summary 用户登录
+// @Description 前端传递JSON类型对象，后端完成校验后登录，返回AccessToken和RefreshToken、UserID。
+// @Tags 用户相关接口
+// @Produce  json
+// @Param ParamLogin body models.ParamLogin true "用户登录结构体"
+// @Router /login [post]
 func LoginHandler(c *gin.Context) {
 	// 获取参数并校验
 	p := new(models.ParamLogin)
@@ -103,6 +109,10 @@ func LoginHandler(c *gin.Context) {
 	}
 	uid, aToken, rToken, err := logic.Login(p)
 	if err != nil {
+		if errors.Is(err, logic.ErrorWrongPass) {
+			ResponseError(c, CodeUsernameOrPassError)
+			return
+		}
 		ResponseError(c, CodeServeBusy)
 		return
 	}
@@ -116,6 +126,14 @@ func LoginHandler(c *gin.Context) {
 }
 
 // SomeInfoHandler 获取用户头像、用户名和购物车数量
+// @Summary 获取用户头像、用户名和购物车数量。
+// @Description 前端传递用户ID，后端返回用户头像、用户名和购物车数量。
+// @Tags 用户相关接口
+// @Produce json
+// @Security x-token
+// @param Authorization header string true "Bearer token"
+// @Param id path string true "用户ID"
+// @Router /someinfo/{id} [get]
 func SomeInfoHandler(c *gin.Context) {
 	// 获取用户id
 	idStr := c.Param("id")
@@ -136,6 +154,14 @@ func SomeInfoHandler(c *gin.Context) {
 }
 
 // UserInfosHandler 获取用户详细的个人信息
+// @Summary 获取用户个人信息
+// @Description 前端传递用户ID，后端返回用户个人信息。
+// @Tags 用户相关接口
+// @Produce json
+// @Security x-token
+// @param Authorization header string true "Bearer token"
+// @Param id path string true "用户ID"
+// @Router /infos/{id} [get]
 func UserInfosHandler(c *gin.Context) {
 	// 获取用户id
 	idStr := c.Param("id")
@@ -154,7 +180,15 @@ func UserInfosHandler(c *gin.Context) {
 	ResponseSuccess(c, infos)
 }
 
-// UserInfosUpdateHandler 用户修改个人资料
+// UserInfosUpdateHandler 用户修改个人信息
+// @Summary 修改个人信息
+// @Description 前端传递JSON类型对象，后端完成更新用户个人信息。
+// @Tags 用户相关接口
+// @Produce json
+// @Security x-token
+// @param Authorization header string true "Bearer token"
+// @Param param body models.ParamInfos true "用户个人信息结构体"
+// @Router /infos/update [put]
 func UserInfosUpdateHandler(c *gin.Context) {
 	infos := new(models.ParamInfos)
 	if err := c.ShouldBindJSON(infos); err != nil {
@@ -196,6 +230,14 @@ func UserInfosUpdateHandler(c *gin.Context) {
 }
 
 // SignOutHandler 用户退出
+// @Summary 用户退出
+// @Description 前端传递UserID，后端清空Redis中AccessToken。
+// @Tags 用户相关接口
+// @Produce  json
+// @Security x-token
+// @param Authorization header string true "Bearer token"
+// @Param id path string true "用户ID"
+// @Router /exit/{id} [delete]
 func SignOutHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	err := logic.SignOut(idStr)
@@ -204,4 +246,17 @@ func SignOutHandler(c *gin.Context) {
 		return
 	}
 	ResponseSuccessWithMsg(c, "退出成功", nil)
+}
+
+// RefreshToken 刷新AccessToken
+// @Summary 刷新AccessToken
+// @Description 前端收到code为1019的状态码后，应重新发起一个put请求访问该接口。
+// @Tags 用户相关接口
+// @Produce  json
+// @Security x-token
+// @param Authorization header string true "Bearer AToken&RToken"
+// @Param id path string true "用户ID"
+// @Router /refreshToken/{id} [put]
+func RefreshToken(c *gin.Context) {
+
 }

@@ -20,7 +20,7 @@ func VerifyEmailFormat(email string) bool {
 
 // VerifyUsernameFormat 校验用户名长度
 func VerifyUsernameFormat(username string) bool {
-	if len(username) >= 5 && len(username) <= 18 {
+	if len(username) >= 5 && len(username) <= 100 {
 		return true
 	}
 	return false

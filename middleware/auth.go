@@ -126,6 +126,8 @@ func JWTAuthRefreshMiddleware() func(c *gin.Context) {
 		controller.ResponseSuccess(c, gin.H{
 			"AccessToken": aToken,
 		})
+		// 更改中间件中的aToken
+		c.Set(CtxAToken, aToken)
 		c.Next()
 	}
 }

@@ -40,21 +40,20 @@ func SetupRouter(mode string) *gin.Engine {
 	// v2路由组使用校验JWT中间件
 	v2 := r.Group("/api/v1")
 	// 刷新AccessToken
-	v2.PUT("refreshToken/:id", middleware.JWTAuthRefreshMiddleware())
+	v2.PUT("refreshToken/:id", middleware.JWTAuthRefreshMiddleware(), controller.RefreshToken)
 	// 添加校验JWT、限制终端设备中间件
 	v2.Use(middleware.JWTAuthMiddleware(), middleware.JWTLimitLoginMiddleware())
 	{
+		// 用户修改个人资料
+		v2.PUT("/infos/update", controller.UserInfosUpdateHandler)
 		v3 := v2.Use(middleware.JWTCheckUID())
 		{
-			v3.DELETE("/exit:id", controller.SignOutHandler)
+			v3.DELETE("/exit/:id", controller.SignOutHandler)
 			// 获取用户简略信息，用于商城header显示
 			v3.GET("/someinfo/:id", controller.SomeInfoHandler)
 			// 获取用户个人信息，用于个人资料显示
 			v3.GET("/infos/:id", controller.UserInfosHandler)
 		}
-
-		// 用户修改个人资料
-		v2.PUT("/infos/update", controller.UserInfosUpdateHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

@@ -23,7 +23,7 @@ import (
 // @description llShop后端接口API
 // @license.name Apache 2.0
 // @termsOfService https://github.com/mayooot/llShop-backend
-// @host  y8ccqm.natappfree.cc
+// @host localhost:9090
 // @BasePath /api/v1
 func main() {
 	// 1. 加载配置
