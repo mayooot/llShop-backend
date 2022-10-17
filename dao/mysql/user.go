@@ -15,7 +15,7 @@ const secret = "shop-backend"
 func InsertUser(u *models.User) (err error) {
 	// 密码加密
 	u.Password = encryptPass(u.Password)
-	sqlStr := `insert into user(user_id,username, phone, password) values (?, ?, ?, ?)`
+	sqlStr := `insert into ums_user(user_id,username, phone, password) values (?, ?, ?, ?)`
 	// 入库
 	_, err = db.Exec(sqlStr, u.UserID, u.Username, u.Phone, u.Password)
 	if err != nil {
@@ -26,7 +26,7 @@ func InsertUser(u *models.User) (err error) {
 
 // QueryOneUserByPhone 通过手机号查询用户是否已经注册。用户存在返回true，否则返回false
 func QueryOneUserByPhone(phone string) (uid int64, exist bool) {
-	strStr := `select user_id from user where phone = ?`
+	strStr := `select user_id from ums_user where phone = ?`
 	err := db.Get(&uid, strStr, phone)
 	if err != nil {
 		exist = false
@@ -40,7 +40,7 @@ func QueryOneUserByPhone(phone string) (uid int64, exist bool) {
 func QueryOneUserByPhoneAndPass(u *models.User) bool {
 	// 用户未加密密码
 	originPass := u.Password
-	sqlStr := `select user_id, phone, password from user where phone = ?`
+	sqlStr := `select user_id, phone, password from ums_user where phone = ?`
 	err := db.Get(u, sqlStr, u.Phone)
 	if err != nil {
 		return false
@@ -58,7 +58,7 @@ func QueryOneUserByPhoneAndPass(u *models.User) bool {
 // QuerySomeInfoByUID 获取用户购物车数量、用户头像、用户名称
 func QuerySomeInfoByUID(uid int64) (info *models.SomeInfo, err error) {
 	info = new(models.SomeInfo)
-	sqlStr := `select username, avatar from user where user_id = ?`
+	sqlStr := `select username, avatar from ums_user where user_id = ?`
 	err = db.Get(info, sqlStr, uid)
 	return
 }
@@ -68,7 +68,7 @@ func QueryInfosByUID(uid int64) (infos *models.UserInfos, err error) {
 	infos = new(models.UserInfos)
 	sqlStr := `select 
 					user_id, username, phone, email, avatar, gender, create_time
-				from user
+				from ums_user
 				where user_id = ?`
 	err = db.Get(infos, sqlStr, uid)
 	return
@@ -76,7 +76,7 @@ func QueryInfosByUID(uid int64) (infos *models.UserInfos, err error) {
 
 // UpdateUserInfosByUID 修改用户个人信息
 func UpdateUserInfosByUID(infos *models.ParamInfos) (err error) {
-	sqlStr := `update user
+	sqlStr := `update ums_user
 					set username = ?, phone = ?, email = ?, avatar = ?, gender = ?
 				where user_id = ? `
 	// uid字符串转成int64，因为controller层已经判断前端传递的uid是否和JWT中间件存储的uid是否相同
