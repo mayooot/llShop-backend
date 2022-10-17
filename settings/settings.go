@@ -20,6 +20,7 @@ type AppConfig struct {
 	*MySQLConfig `mapstructure:"mysql"`
 	*RedisConfig `mapstructure:"redis"`
 	*UserConfig  `mapstructure:"user"`
+	*Aliyun      `mapstructure:"aliyun"`
 }
 
 type LogConfig struct {
@@ -51,6 +52,18 @@ type UserConfig struct {
 	Width      int `mapstructure:"width"`
 	MinPassLen int `mapstructure:"min_pass_len"`
 	MaxPassLen int `mapstructure:"max_pass_len"`
+}
+
+type Aliyun struct {
+	AccessKeyId     string `mapstructure:"access_key_id"`
+	AccessKeySecret string `mapstructure:"access_key_secret"`
+	*OSSConfig      `mapstructure:"oss"`
+}
+
+type OSSConfig struct {
+	Endpoint         string `mapstructure:"endpoint"`
+	BucketName       string `mapstructure:"bucket_name"`
+	UserAvatarPrefix string `mapstructure:"user_avatar_prefix"`
 }
 
 func Init() (err error) {

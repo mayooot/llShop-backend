@@ -14,6 +14,7 @@ import (
 	"shop-backend/router"
 	"shop-backend/settings"
 	"shop-backend/utils/gen"
+	"shop-backend/utils/oss"
 	"syscall"
 	"time"
 )
@@ -23,16 +24,16 @@ import (
 // @description llShop后端接口API
 // @license.name Apache 2.0
 // @termsOfService https://github.com/mayooot/llShop-backend
-// @host localhost:9090
+// @host  9naeir.natappfree.cc
 // @BasePath /api/v1
 func main() {
-	// 1. 加载配置
+	// 加载配置
 	if err := settings.Init(); err != nil {
 		fmt.Printf("init settings failed, err:%v\n", err)
 		return
 	}
 
-	// 2. 初始化日志
+	// 初始化日志
 	if err := logger.Init(settings.Conf.LogConfig, settings.Conf.Mode); err != nil {
 		fmt.Printf("init logger failed, err:%v\n", err)
 		return
@@ -40,30 +41,36 @@ func main() {
 	defer zap.L().Sync()
 	zap.L().Debug("logger init success...")
 
-	// 3. 初始化MySQL连接
+	// 初始化MySQL连接
 	if err := mysql.Init(settings.Conf.MySQLConfig); err != nil {
 		fmt.Printf("init logger failed, err:%v\n", err)
 		return
 	}
 	defer mysql.Close()
 
-	// 4. 初始化Redis连接
+	// 初始化Redis连接
 	if err := redis.Init(settings.Conf.RedisConfig); err != nil {
 		fmt.Printf("init logger failed, err:%v\n", err)
 		return
 	}
 	defer redis.Close()
 
-	// 5. 初始化雪花算法
+	// 初始化雪花算法
 	if err := gen.Init(settings.Conf.StartTime, settings.Conf.MachineId); err != nil {
 		fmt.Printf("init snowflake failed, err:%v\n", err)
 		return
 	}
 
-	// 6. 注册路由
+	// 初始化阿里云OSS
+	if err := oss.Init(settings.Conf.Aliyun); err != nil {
+		fmt.Printf("init Aliyun OSS failed, err:%v\n", err)
+		return
+	}
+
+	// 注册路由
 	r := router.SetupRouter(settings.Conf.Mode)
 
-	// 7. 启动服务(优雅关机)
+	// 启动服务(优雅关机)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", settings.Conf.Port),
 		Handler: r,

@@ -31,10 +31,6 @@ func SetupRouter(mode string) *gin.Engine {
 		v1.POST("/signup", controller.SignUpHandler)
 		// 登录
 		v1.POST("/login", controller.LoginHandler)
-		// 测试
-		v1.GET("/ping", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"msg": "pong"})
-		})
 	}
 
 	// v2路由组使用校验JWT中间件
@@ -46,8 +42,13 @@ func SetupRouter(mode string) *gin.Engine {
 	{
 		// 用户修改个人资料
 		v2.PUT("/infos/update", controller.UserInfosUpdateHandler)
+		// 用户修改头像
+		v2.POST("/infos/update/avatar", controller.UserInfoUpdateAvatarHandler)
+
+		// 添加检查用户ID中间件，id为path类型
 		v3 := v2.Use(middleware.JWTCheckUID())
 		{
+			// 用户退出
 			v3.DELETE("/exit/:id", controller.SignOutHandler)
 			// 获取用户简略信息，用于商城header显示
 			v3.GET("/someinfo/:id", controller.SomeInfoHandler)

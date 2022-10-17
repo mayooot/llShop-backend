@@ -8,6 +8,7 @@ import (
 	"shop-backend/logic"
 	"shop-backend/models"
 	"shop-backend/utils/check"
+	"shop-backend/utils/oss"
 	"strconv"
 )
 
@@ -112,9 +113,13 @@ func LoginHandler(c *gin.Context) {
 		if errors.Is(err, logic.ErrorWrongPass) {
 			ResponseError(c, CodeUsernameOrPassError)
 			return
+		} else if errors.Is(err, logic.ErrorUserNotExist) {
+			ResponseError(c, CodeUserNotExist)
+			return
+		} else {
+			ResponseError(c, CodeServeBusy)
+			return
 		}
-		ResponseError(c, CodeServeBusy)
-		return
 	}
 	fmt.Println(math.MaxInt64)
 	ResponseSuccessWithMsg(c, "登录成功", gin.H{
@@ -259,4 +264,42 @@ func SignOutHandler(c *gin.Context) {
 // @Router /refreshToken/{id} [put]
 func RefreshToken(c *gin.Context) {
 
+}
+
+// UserInfoUpdateAvatarHandler 更新用户头像
+// @Summary 用户更新头像
+// @Description 前端上传图片，后端返回图片路径。
+// @Tags 用户相关接口
+// @Produce  json
+// @Security x-token
+// @param Authorization header string true "Bearer AToken"
+// @Router /infos/update/avatar [post]
+func UserInfoUpdateAvatarHandler(c *gin.Context) {
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		// 读取文件失败
+		ResponseError(c, CodeUploadAvatarFailed)
+		return
+	}
+	// 检查图片格式
+	if err = check.CheckPic(fileHeader); err != nil {
+		ResponseError(c, CodeUploadAvatarFailed)
+		return
+	}
+	file, err := fileHeader.Open()
+	if err != nil {
+		// 打开文件失败
+		ResponseError(c, CodeUploadAvatarFailed)
+		return
+	}
+
+	// 上传头像到阿里云OSS
+	url, err := oss.UploadPic(file)
+	if err != nil || url == "" {
+		// 上传失败
+		ResponseError(c, CodeUploadAvatarFailed)
+		return
+	}
+
+	ResponseSuccessWithMsg(c, "更新成功✅", gin.H{"path": url})
 }
