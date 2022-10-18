@@ -61,7 +61,7 @@ func SendVerifyCodeHandler(c *gin.Context) {
 // @Description 前端传递JSON类型对象，后端完成校验后注册新用户。
 // @Tags 用户相关接口
 // @Produce json
-// @Param ParamSignUp body models.ParamSignUp true "用户注册结构体"
+// @Param ParamSignUp body dto.ParamSignUp true "用户注册结构体"
 // @Router /signup [post]
 func SignUpHandler(c *gin.Context) {
 	// 获取参数并校验
@@ -109,7 +109,7 @@ func SignUpHandler(c *gin.Context) {
 // @Description 前端传递JSON类型对象，后端完成校验后登录，返回AccessToken和RefreshToken、UserID。
 // @Tags 用户相关接口
 // @Produce  json
-// @Param ParamLogin body models.ParamLogin true "用户登录结构体"
+// @Param ParamLogin body dto.ParamLogin true "用户登录结构体"
 // @Router /login [post]
 func LoginHandler(c *gin.Context) {
 	// 获取参数并校验
@@ -186,11 +186,11 @@ func UserInfosHandler(c *gin.Context) {
 // @Produce json
 // @Security x-token
 // @param Authorization header string true "Bearer token"
-// @Param param body models.ParamInfos true "用户个人信息结构体"
+// @Param param body dto.ParamInfos true "用户个人信息结构体"
 // @Router /infos/update [put]
 func UserInfosUpdateHandler(c *gin.Context) {
 	infos := new(dto.ParamInfos)
-	infos.Id = strconv.FormatInt(c.GetInt64("uid"), 10)
+	infos.ID = strconv.FormatInt(c.GetInt64("uid"), 10)
 	if err := c.ShouldBindJSON(infos); err != nil {
 		// 请求参数有误
 		ResponseError(c, CodeInvalidParams)

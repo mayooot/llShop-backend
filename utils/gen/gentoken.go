@@ -7,7 +7,7 @@ import (
 )
 
 // ATokenExpireDuration AToken存活时间，1个小时
-const ATokenExpireDuration = time.Second
+const ATokenExpireDuration = time.Hour * 24
 
 // RTokenExpireDuration AToken存活时间，30天
 const RTokenExpireDuration = time.Hour * 24 * 30

@@ -30,8 +30,8 @@ func InsertUser(u *po.UmsUser) error {
 	return nil
 }
 
-// QueryOneUserByPhone 通过手机号查询用户是否已经注册。用户存在返回true，否则返回false
-func QueryOneUserByPhone(phone string) (exist bool) {
+// SelectUserByPhone 通过手机号查询用户是否已经注册。用户存在返回true，否则返回false
+func SelectUserByPhone(phone string) (exist bool) {
 	// 通过手机号查询
 	result := db.Where("phone = ?", phone).First(&po.UmsUser{})
 	if result.Error != nil {
@@ -45,8 +45,8 @@ func QueryOneUserByPhone(phone string) (exist bool) {
 	return true
 }
 
-// QueryOneUserByPhoneAndPass 通过手机号和密码校验用户是否存在
-func QueryOneUserByPhoneAndPass(u *po.UmsUser) bool {
+// SelectUserByPhoneAndPass 通过手机号和密码校验用户是否存在
+func SelectUserByPhoneAndPass(u *po.UmsUser) bool {
 	// 用户未加密密码
 	originPass := u.Password
 	// 通过手机号查询
@@ -65,8 +65,8 @@ func QueryOneUserByPhoneAndPass(u *po.UmsUser) bool {
 	return true
 }
 
-// QuerySomeInfoByUID 获取用户购物车数量、用户头像、用户名称
-func QuerySomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
+// SelectSomeInfoByUID 获取用户购物车数量、用户头像、用户名称
+func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
 	var user = new(po.UmsUser)
 	result := db.Where("user_id", uid).First(user)
 	if result.Error != nil {
@@ -83,8 +83,8 @@ func QuerySomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
 	return info, result.Error
 }
 
-// QueryInfosByUID 查询用户详细信息
-func QueryInfosByUID(uid int64) (*vo.UserInfos, error) {
+// SelectInofsByUID 查询用户详细信息
+func SelectInofsByUID(uid int64) (*vo.UserInfos, error) {
 	var user = new(po.UmsUser)
 	result := db.Where("user_id", uid).First(user)
 	if result.Error != nil {
@@ -106,7 +106,7 @@ func QueryInfosByUID(uid int64) (*vo.UserInfos, error) {
 
 // UpdateUserInfosByUID 修改用户个人信息
 func UpdateUserInfosByUID(infos *dto.ParamInfos) error {
-	id, _ := strconv.ParseInt(infos.Id, 10, 64)
+	id, _ := strconv.ParseInt(infos.ID, 10, 64)
 	gender, _ := strconv.ParseInt(infos.Gender, 10, 8)
 	user := &po.UmsUser{
 		ID:         id,

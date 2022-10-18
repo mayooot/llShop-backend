@@ -17,10 +17,10 @@ type ParamLogin struct {
 
 // ParamInfos 封装用户信息的请求体
 type ParamInfos struct {
-	Id       string `json:"id"`
-	Username string `json:"username" binding:"required"`
-	Phone    string `json:"phone" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	Email    string `json:"email" binding:"required"`
-	Gender   string `json:"gender" binding:"required"`
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	Phone    string `json:"phone"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
+	Gender   string `json:"gender"`
 }

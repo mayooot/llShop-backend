@@ -24,18 +24,19 @@ func SetupRouter(mode string) *gin.Engine {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// 普通路由组，只包含跨域、日志、恢复中间件
-	commonGroup := r.Group("/api/v1")
+	commonGroup := r.Group("/api")
+	userGroup := commonGroup.Group("/user")
 	{
 		// 获取验证码
-		commonGroup.GET("/phone", controller.SendVerifyCodeHandler)
+		userGroup.GET("/phone", controller.SendVerifyCodeHandler)
 		// 注册
-		commonGroup.POST("/signup", controller.SignUpHandler)
+		userGroup.POST("/signup", controller.SignUpHandler)
 		// 登录
-		commonGroup.POST("/login", controller.LoginHandler)
+		userGroup.POST("/login", controller.LoginHandler)
 	}
 
 	// 鉴权路由组，包含JWT校验中间件，限制用户多端登录中间件
-	jwtGroup := r.Group("/api/v1")
+	jwtGroup := userGroup
 	jwtGroup.Use(middleware.JWTAuthMiddleware())
 	{
 		// 获取用户简略信息，用于商城header显示

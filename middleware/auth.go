@@ -48,7 +48,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 		if err != nil {
 			if err == check.ErrorATokenExpired {
 				// 如果错误类型为accessToken过期错误，那么需要使用refreshToken协助刷新
-				// zap.L().Info("accessToken is expired", zap.Int64("uid", mc.UserID))
+				zap.L().Info("accessToken is expired", zap.Int64("uid", mc.UserID))
 				_, err = check.CheckToken(refreshToken)
 				if err != nil {
 					// 如果解析refreshToken出现错误
@@ -69,7 +69,7 @@ func JWTAuthMiddleware() func(c *gin.Context) {
 					controller.ResponseErrorWithMsg(c,
 						controller.CodeFrontEndNeedUseNewToken,
 						gin.H{"accessToken": newToken})
-					c.Next()
+					c.Abort()
 					return
 				}
 			} else {

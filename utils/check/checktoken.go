@@ -21,7 +21,7 @@ func CheckToken(tokenString string) (claims *gen.MyClaims, err error) {
 		v, ok := err.(*jwt.ValidationError)
 		if ok && v.Errors == jwt.ValidationErrorExpired {
 			// 如果是Token过期错误
-			return nil, ErrorATokenExpired
+			return claims, ErrorATokenExpired
 		}
 		// 解析错误
 		zap.L().Error("jwt.ParseWithClaims failed",

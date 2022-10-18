@@ -50,7 +50,7 @@ func SendVerifyCode(phone string) (code string, err error) {
 func SignUp(u *dto.ParamSignUp) error {
 	// 到此，用户手机号格式一定是正确的
 	// 如果用户已经注册
-	if ok := mysql.QueryOneUserByPhone(u.Phone); ok {
+	if ok := mysql.SelectUserByPhone(u.Phone); ok {
 		return ErrorUserIsRegistered
 	}
 	// 通过手机号从Redis获取验证码
@@ -76,15 +76,6 @@ func SignUp(u *dto.ParamSignUp) error {
 
 	// 生成uid
 	uid := gen.GenSnowflakeId()
-	// 构建user实例
-	// user := &models.User{
-	// 	UserID: uid,
-	// 	// 随机生成用户名
-	// 	Username: randomname.GenerateName(),
-	// 	Phone:    u.Phone,
-	// 	Password: u.Password,
-	// }
-
 	user := &po.UmsUser{
 		ID:       uid,
 		Username: randomname.GenerateName(),
@@ -101,7 +92,7 @@ func SignUp(u *dto.ParamSignUp) error {
 // Login 登录逻辑
 func Login(p *dto.ParamLogin) (uid int64, aToken, rToken string, err error) {
 	var ok bool
-	ok = mysql.QueryOneUserByPhone(p.Phone)
+	ok = mysql.SelectUserByPhone(p.Phone)
 	if !ok {
 		// 如果用户不存在
 		err = ErrorUserNotExist
@@ -114,7 +105,7 @@ func Login(p *dto.ParamLogin) (uid int64, aToken, rToken string, err error) {
 		Password: p.Password,
 	}
 
-	if ok := mysql.QueryOneUserByPhoneAndPass(user); !ok {
+	if ok := mysql.SelectUserByPhoneAndPass(user); !ok {
 		// 用户输入密码错误
 		err = ErrorWrongPass
 		return
@@ -135,14 +126,14 @@ func Login(p *dto.ParamLogin) (uid int64, aToken, rToken string, err error) {
 
 // GetSomeInfo 返回简略信息
 func GetSomeInfo(uid int64) (info *vo.SomeInfo, err error) {
-	info, err = mysql.QuerySomeInfoByUID(uid)
+	info, err = mysql.SelectSomeInfoByUID(uid)
 	return
 }
 
 // GetUserInfos 获取用户详细信息
 // todo 邮箱登录功能未实现
 func GetUserInfos(uid int64) (infos *vo.UserInfos, err error) {
-	return mysql.QueryInfosByUID(uid)
+	return mysql.SelectInofsByUID(uid)
 }
 
 // UpdateInfos 更新用户信息
