@@ -28,6 +28,9 @@ const (
 	CodeUserNotExist
 	CodeUploadAvatarFailed
 	CodeUploadAvatarToBigOrExtError
+	CodeMustRequestCode
+	CodeNeedReLogin
+	CodeFrontEndNeedUseNewToken
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -57,13 +60,16 @@ var codeMsgMap = map[ResCode]string{
 	CodeUserNotExist:                "用户不存在",
 	CodeUploadAvatarFailed:          "上传头像失败🫥",
 	CodeUploadAvatarToBigOrExtError: "图片过大或格式不正确😣",
+	CodeMustRequestCode:             "请先获取验证码",
+	CodeNeedReLogin:                 "认证过期，请重新登录😎",
+	CodeFrontEndNeedUseNewToken:     "请重置用户的AccessToken",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息
 func (c ResCode) Msg() string {
 	msg, ok := codeMsgMap[c]
 	if !ok {
-		msg = codeMsgMap[c]
+		msg = codeMsgMap[CodeServeBusy]
 	}
 	return msg
 }

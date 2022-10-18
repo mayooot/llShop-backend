@@ -22,39 +22,32 @@ func SetupRouter(mode string) *gin.Engine {
 	r.Use(middleware.Cors(), logger.GinLogger(), logger.GinRecovery(true))
 	// swagger接口文档路由
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	// v1路由组不使用校验JWT中间件
-	v1 := r.Group("/api/v1")
+
+	// 普通路由组，只包含跨域、日志、恢复中间件
+	commonGroup := r.Group("/api/v1")
 	{
 		// 获取验证码
-		v1.GET("/phone", controller.SendVerifyCodeHandler)
+		commonGroup.GET("/phone", controller.SendVerifyCodeHandler)
 		// 注册
-		v1.POST("/signup", controller.SignUpHandler)
+		commonGroup.POST("/signup", controller.SignUpHandler)
 		// 登录
-		v1.POST("/login", controller.LoginHandler)
+		commonGroup.POST("/login", controller.LoginHandler)
 	}
 
-	// v2路由组使用校验JWT中间件
-	v2 := r.Group("/api/v1")
-	// 刷新AccessToken
-	v2.PUT("refreshToken/:id", middleware.JWTAuthRefreshMiddleware(), controller.RefreshToken)
-	// 添加校验JWT、限制终端设备中间件
-	v2.Use(middleware.JWTAuthMiddleware(), middleware.JWTLimitLoginMiddleware())
+	// 鉴权路由组，包含JWT校验中间件，限制用户多端登录中间件
+	jwtGroup := r.Group("/api/v1")
+	jwtGroup.Use(middleware.JWTAuthMiddleware())
 	{
+		// 获取用户简略信息，用于商城header显示
+		jwtGroup.GET("/someinfo", controller.SomeInfoHandler)
+		// 获取用户个人信息，用于个人资料显示
+		jwtGroup.GET("/infos", controller.UserInfosHandler)
 		// 用户修改个人资料
-		v2.PUT("/infos/update", controller.UserInfosUpdateHandler)
+		jwtGroup.PUT("/infos/update", controller.UserInfosUpdateHandler)
 		// 用户修改头像
-		v2.POST("/infos/update/avatar", controller.UserInfoUpdateAvatarHandler)
-
-		// 添加检查用户ID中间件，id为path类型
-		v3 := v2.Use(middleware.JWTCheckUID())
-		{
-			// 用户退出
-			v3.DELETE("/exit/:id", controller.SignOutHandler)
-			// 获取用户简略信息，用于商城header显示
-			v3.GET("/someinfo/:id", controller.SomeInfoHandler)
-			// 获取用户个人信息，用于个人资料显示
-			v3.GET("/infos/:id", controller.UserInfosHandler)
-		}
+		jwtGroup.POST("/infos/update/avatar", controller.UserInfoUpdateAvatarHandler)
+		// 用户退出
+		jwtGroup.DELETE("/exit", controller.SignOutHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

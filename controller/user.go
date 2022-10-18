@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"math"
 	"shop-backend/logic"
-	"shop-backend/models/params"
+	"shop-backend/models/dto"
 	"shop-backend/utils/check"
 	"shop-backend/utils/oss"
 	"strconv"
@@ -23,27 +24,33 @@ func SendVerifyCodeHandler(c *gin.Context) {
 	// 获取参数
 	phone := c.Query("phone")
 	if phone == "" {
+		zap.L().Error("The mobile phone number field is empty.")
 		// phone字段为空
 		ResponseError(c, CodePhoneIsNotEmpty)
 		return
 	}
 	if ok := check.VerifyMobileFormat(phone); !ok {
 		// 手机号格式不正确
+		zap.L().Error("The format of the mobile phone number is wrong.")
 		ResponseError(c, CodePhoneFormatError)
 		return
 	}
 	// 发送验证码
 	code, err := logic.SendVerifyCode(phone)
+	zap.L().Info("Send verification code.", zap.String("code", code))
 	if err != nil {
 		if errors.Is(err, logic.ErrorRequestCodeFrequent) {
 			// 用户频繁请求验证码
+			zap.L().Warn("The verification code is frequently obtained.", zap.String("phone", phone))
 			ResponseError(c, CodeRequestCodeFrequently)
 			return
 		}
 		// 生成、发送验证码失败
+		zap.L().Error("Failed to send verification code.")
 		ResponseError(c, CodeServeBusy)
 		return
 	}
+	zap.L().Info("Verification code sent successfully.", zap.String("code", code))
 	ResponseSuccessWithMsg(c, "发送成功，验证码五分钟内有效", gin.H{
 		"code": code,
 	})
@@ -58,7 +65,7 @@ func SendVerifyCodeHandler(c *gin.Context) {
 // @Router /signup [post]
 func SignUpHandler(c *gin.Context) {
 	// 获取参数并校验
-	p := new(params.ParamSignUp)
+	p := new(dto.ParamSignUp)
 	if err := c.ShouldBindJSON(p); err != nil {
 		// 请求参数有误
 		ResponseError(c, CodeInvalidParams)
@@ -86,6 +93,10 @@ func SignUpHandler(c *gin.Context) {
 			// 密码强度太低
 			ResponseError(c, CodePassIsWeak)
 			return
+		} else if errors.Is(err, logic.ErrorMustRequestCode) {
+			// 用户未获取验证码
+			ResponseError(c, CodeMustRequestCode)
+			return
 		}
 		ResponseError(c, CodeServeBusy)
 		return
@@ -102,7 +113,7 @@ func SignUpHandler(c *gin.Context) {
 // @Router /login [post]
 func LoginHandler(c *gin.Context) {
 	// 获取参数并校验
-	p := new(params.ParamLogin)
+	p := new(dto.ParamLogin)
 	if err := c.ShouldBindJSON(p); err != nil {
 		// 请求参数有误
 		ResponseError(c, CodeInvalidParams)
@@ -138,20 +149,12 @@ func LoginHandler(c *gin.Context) {
 // @Security x-token
 // @param Authorization header string true "Bearer token"
 // @Param id path string true "用户ID"
-// @Router /someinfo/{id} [get]
+// @Router /someinfo [get]
 func SomeInfoHandler(c *gin.Context) {
-	// 获取用户id
-	idStr := c.Param("id")
-	// 将字符串转成int64
-	uid, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ResponseError(c, CodeInvalidParams)
-		return
-	}
-
 	// 获取用户简略信息
-	infos, err := logic.GetSomeInfo(uid)
+	infos, err := logic.GetSomeInfo(c.GetInt64("uid"))
 	if err != nil {
+		zap.L().Error("logic.GetSomeInfo(c.GetInt64(\"uid\") failed", zap.Error(err))
 		ResponseError(c, CodeServeBusy)
 		return
 	}
@@ -168,16 +171,7 @@ func SomeInfoHandler(c *gin.Context) {
 // @Param id path string true "用户ID"
 // @Router /infos/{id} [get]
 func UserInfosHandler(c *gin.Context) {
-	// 获取用户id
-	idStr := c.Param("id")
-	// 字符串转为int64
-	uid, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		ResponseError(c, CodeInvalidParams)
-		return
-	}
-
-	infos, err := logic.GetUserInfos(uid)
+	infos, err := logic.GetUserInfos(c.GetInt64("uid"))
 	if err != nil {
 		ResponseError(c, CodeServeBusy)
 		return
@@ -195,7 +189,8 @@ func UserInfosHandler(c *gin.Context) {
 // @Param param body models.ParamInfos true "用户个人信息结构体"
 // @Router /infos/update [put]
 func UserInfosUpdateHandler(c *gin.Context) {
-	infos := new(params.ParamInfos)
+	infos := new(dto.ParamInfos)
+	infos.Id = strconv.FormatInt(c.GetInt64("uid"), 10)
 	if err := c.ShouldBindJSON(infos); err != nil {
 		// 请求参数有误
 		ResponseError(c, CodeInvalidParams)
@@ -204,12 +199,6 @@ func UserInfosUpdateHandler(c *gin.Context) {
 	if _, err := strconv.ParseInt(infos.Gender, 10, 8); err != nil {
 		// 校验性别字符串
 		ResponseError(c, CodeInvalidParams)
-		return
-	}
-	if infos.Id != c.GetString("uid") {
-		// 如果用户传递的uid和上一步校验jwt中间件中的uid不同
-		// 请求参数有误
-		ResponseError(c, CodeServeBusy)
 		return
 	}
 
@@ -242,28 +231,14 @@ func UserInfosUpdateHandler(c *gin.Context) {
 // @Security x-token
 // @param Authorization header string true "Bearer token"
 // @Param id path string true "用户ID"
-// @Router /exit/{id} [delete]
+// @Router /exit [delete]
 func SignOutHandler(c *gin.Context) {
-	idStr := c.Param("id")
-	err := logic.SignOut(idStr)
+	err := logic.SignOut(c.GetString("uid"))
 	if err != nil {
 		ResponseError(c, CodeSignOutFailed)
 		return
 	}
 	ResponseSuccessWithMsg(c, "退出成功", nil)
-}
-
-// RefreshToken 刷新AccessToken
-// @Summary 刷新AccessToken
-// @Description 前端收到code为1019的状态码后，应重新发起一个put请求访问该接口。
-// @Tags 用户相关接口
-// @Produce  json
-// @Security x-token
-// @param Authorization header string true "Bearer AToken&RToken"
-// @Param id path string true "用户ID"
-// @Router /refreshToken/{id} [put]
-func RefreshToken(c *gin.Context) {
-
 }
 
 // UserInfoUpdateAvatarHandler 更新用户头像
@@ -302,7 +277,7 @@ func UserInfoUpdateAvatarHandler(c *gin.Context) {
 	}
 
 	// 获取用户ID
-	idStr := c.GetString("uid")
+	idStr := c.GetInt64("uid")
 	err = logic.UpdateUserAvatar(idStr, path)
 	if err != nil {
 		// 上传失败

@@ -1,4 +1,4 @@
-package models
+package vo
 
 import "time"
 
@@ -20,7 +20,7 @@ type SomeInfo struct {
 
 // UserInfos 用户详细信息
 type UserInfos struct {
-	Id         int64     `json:"id" db:"user_id"`
+	Id         int64     `json:"id,string" db:"user_id"`
 	Username   string    `json:"username" db:"username"`
 	Phone      string    `json:"phone" db:"phone"`
 	Email      string    `json:"email" db:"email"`

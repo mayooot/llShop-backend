@@ -2,11 +2,11 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"shop-backend/controller"
 	"shop-backend/dao/redis"
 	"shop-backend/utils/check"
 	"shop-backend/utils/gen"
-	"strconv"
 	"strings"
 )
 
@@ -18,44 +18,72 @@ var (
 // JWTAuthMiddleware 基于JWT的认证中间件
 func JWTAuthMiddleware() func(c *gin.Context) {
 	return func(c *gin.Context) {
-		// 客户端携带Token有三种方式：1.放在请求头中 2.放在请求体中 3.放在URI中
-		// 这里假设Token放在Header的Authorization中，并使用Bearer开头
-		// Authorization: Bearer xxx.xxx.xxx
+		// 用户需要携带AccessToken和RefreshToken
+		// Authorization: Bearer AccessToken&RefreshToken
 		authHeader := c.Request.Header.Get("Authorization")
 		if authHeader == "" {
 			// 未携带Token
+			zap.L().Error("c.Request.Header.Get(\"Authorization\") is nil")
 			controller.ResponseError(c, controller.CodeTokenIsEmpty)
 			c.Abort()
 			return
 		}
+
 		// 按照空格进行分割
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			// 发送Token格式有误
+			// 携带的Token格式有误
+			zap.L().Error("trings.SplitN(authHeader, \" \", 2) failed", zap.String("authHeader", authHeader))
 			controller.ResponseError(c, controller.CodeTokenIsWrongFormat)
 			c.Abort()
 			return
 		}
-		// 解析前端传递的Token
-		mc, err := check.CheckAToken(parts[1])
+
+		// 解析前端传递的两个Token
+		tokens := strings.SplitN(parts[1], "&", 2)
+		accessToken := tokens[0]
+		refreshToken := tokens[1]
+		// 解析AccessToken
+		mc, err := check.CheckToken(accessToken)
 		if err != nil {
 			if err == check.ErrorATokenExpired {
-				// Token过期错误
-				controller.ResponseError(c, controller.CodeTokenExpire)
+				// 如果错误类型为accessToken过期错误，那么需要使用refreshToken协助刷新
+				// zap.L().Info("accessToken is expired", zap.Int64("uid", mc.UserID))
+				_, err = check.CheckToken(refreshToken)
+				if err != nil {
+					// 如果解析refreshToken出现错误
+					zap.L().Error("parseRefreshToken error", zap.Int64("uid", mc.UserID))
+					controller.ResponseError(c, controller.CodeNeedReLogin)
+					c.Abort()
+					return
+				} else {
+					var newToken string
+					newToken, _, err = gen.GenToken(mc.UserID)
+					if err != nil {
+						// 生成AccessToken失败
+						zap.L().Error("use refreshToken refresh accessToken failed")
+						controller.ResponseError(c, controller.CodeTokenRefreshFailed)
+						c.Abort()
+						return
+					}
+					controller.ResponseErrorWithMsg(c,
+						controller.CodeFrontEndNeedUseNewToken,
+						gin.H{"accessToken": newToken})
+					c.Next()
+					return
+				}
+			} else {
+				// 解析失败，Token不合法
+				zap.L().Error("received an illegal token", zap.String("accessToken", accessToken))
+				controller.ResponseError(c, controller.CodeTokenIsInvalid)
 				c.Abort()
 				return
 			}
-			// 解析失败，Token不合法
-			controller.ResponseError(c, controller.CodeTokenIsInvalid)
-			c.Abort()
-			return
 		}
-		// 将当前请求的UserID信息保存到请求的上下文中
-		// 将uid转换成string
-		uidStr := strconv.FormatInt(mc.UserId, 10)
-		c.Set(CtxUserIdKey, uidStr)
-		c.Set(CtxAToken, parts[1])
-		// 后续的请求可以通过c.Get(CtxUserIdKey)来获取当前请求的用户信息
+		// AccessToken正确且未过期
+		// 将JWT中携带的用户ID和AccessToken存到中间件链路中
+		c.Set(CtxUserIdKey, mc.UserID)
+		c.Set(CtxAToken, accessToken)
 		c.Next()
 	}
 }
@@ -85,63 +113,6 @@ func JWTLimitLoginMiddleware() func(c *gin.Context) {
 			c.Abort()
 			return
 		}
-		c.Next()
-	}
-}
-
-// JWTAuthRefreshMiddleware 刷新AccessToken
-func JWTAuthRefreshMiddleware() func(c *gin.Context) {
-	return func(c *gin.Context) {
-		authHeader := c.Request.Header.Get("Authorization")
-		if authHeader == "" {
-			controller.ResponseError(c, controller.CodeTokenIsEmpty)
-			c.Abort()
-			return
-		}
-		// 按照空格进行分割
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			controller.ResponseError(c, controller.CodeTokenIsWrongFormat)
-			c.Abort()
-			return
-		}
-		// 前端传递过来的两个Token使用&拼接
-		tokens := strings.SplitN(parts[1], "&", 2)
-		if len(tokens) != 2 {
-			controller.ResponseError(c, controller.CodeTokenIsWrongFormat)
-			c.Abort()
-			return
-		}
-		aToken, err := gen.RefreshToken(tokens[0], tokens[1])
-		if err != nil {
-			controller.ResponseError(c, controller.CodeTokenRefreshFailed)
-			c.Abort()
-			return
-		}
-		if aToken == "" {
-			controller.ResponseError(c, controller.CodeAccessTokenIsLiving)
-			c.Abort()
-			return
-		}
-		controller.ResponseSuccess(c, gin.H{
-			"AccessToken": aToken,
-		})
-		// 更改中间件中的aToken
-		c.Set(CtxAToken, aToken)
-		c.Next()
-	}
-}
-
-// JWTCheckUID 检查前端传递的用户ID是否和JWTAuthMiddleware存储的ID相同
-func JWTCheckUID() func(c *gin.Context) {
-	return func(c *gin.Context) {
-		idStr := c.Param("id")
-		if idStr != c.GetString("uid") {
-			controller.ResponseError(c, controller.CodeServeBusy)
-			c.Abort()
-			return
-		}
-
 		c.Next()
 	}
 }
