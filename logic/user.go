@@ -7,6 +7,7 @@ import (
 	"shop-backend/dao/mysql"
 	"shop-backend/dao/redis"
 	"shop-backend/models"
+	"shop-backend/models/params"
 	"shop-backend/utils/check"
 	"shop-backend/utils/gen"
 	"strconv"
@@ -46,7 +47,7 @@ func SendVerifyCode(phone string) (code string, err error) {
 }
 
 // SignUp 用户注册逻辑
-func SignUp(u *models.ParamSignUp) error {
+func SignUp(u *params.ParamSignUp) error {
 	// 到此，用户手机号格式一定是正确的
 	// 如果用户已经注册
 	if _, ok := mysql.QueryOneUserByPhone(u.Phone); ok {
@@ -90,7 +91,7 @@ func SignUp(u *models.ParamSignUp) error {
 }
 
 // Login 登录逻辑
-func Login(p *models.ParamLogin) (uid int64, aToken, rToken string, err error) {
+func Login(p *params.ParamLogin) (uid int64, aToken, rToken string, err error) {
 	var ok bool
 	uid, ok = mysql.QueryOneUserByPhone(p.Phone)
 	if !ok {
@@ -140,7 +141,7 @@ func GetUserInfos(uid int64) (infos *models.UserInfos, err error) {
 }
 
 // UpdateInfos 更新用户信息
-func UpdateInfos(infos *models.ParamInfos) (err error) {
+func UpdateInfos(infos *params.ParamInfos) (err error) {
 	return mysql.UpdateUserInfosByUID(infos)
 }
 

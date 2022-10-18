@@ -6,6 +6,7 @@ import (
 	"errors"
 	"go.uber.org/zap"
 	"shop-backend/models"
+	"shop-backend/models/params"
 	"strconv"
 )
 
@@ -76,7 +77,7 @@ func QueryInfosByUID(uid int64) (infos *models.UserInfos, err error) {
 }
 
 // UpdateUserInfosByUID 修改用户个人信息
-func UpdateUserInfosByUID(infos *models.ParamInfos) (err error) {
+func UpdateUserInfosByUID(infos *params.ParamInfos) (err error) {
 	sqlStr := `update ums_user
 					set username = ?, phone = ?, email = ?, avatar = ?, gender = ?
 				where user_id = ? `

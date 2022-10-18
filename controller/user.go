@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"math"
 	"shop-backend/logic"
-	"shop-backend/models"
+	"shop-backend/models/params"
 	"shop-backend/utils/check"
 	"shop-backend/utils/oss"
 	"strconv"
@@ -58,7 +58,7 @@ func SendVerifyCodeHandler(c *gin.Context) {
 // @Router /signup [post]
 func SignUpHandler(c *gin.Context) {
 	// 获取参数并校验
-	p := new(models.ParamSignUp)
+	p := new(params.ParamSignUp)
 	if err := c.ShouldBindJSON(p); err != nil {
 		// 请求参数有误
 		ResponseError(c, CodeInvalidParams)
@@ -102,7 +102,7 @@ func SignUpHandler(c *gin.Context) {
 // @Router /login [post]
 func LoginHandler(c *gin.Context) {
 	// 获取参数并校验
-	p := new(models.ParamLogin)
+	p := new(params.ParamLogin)
 	if err := c.ShouldBindJSON(p); err != nil {
 		// 请求参数有误
 		ResponseError(c, CodeInvalidParams)
@@ -195,7 +195,7 @@ func UserInfosHandler(c *gin.Context) {
 // @Param param body models.ParamInfos true "用户个人信息结构体"
 // @Router /infos/update [put]
 func UserInfosUpdateHandler(c *gin.Context) {
-	infos := new(models.ParamInfos)
+	infos := new(params.ParamInfos)
 	if err := c.ShouldBindJSON(infos); err != nil {
 		// 请求参数有误
 		ResponseError(c, CodeInvalidParams)

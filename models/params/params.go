@@ -1,4 +1,4 @@
-package models
+package params
 
 // 封装请求参数的结构体
 
