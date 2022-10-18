@@ -3,6 +3,7 @@ package mysql
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"go.uber.org/zap"
 	"shop-backend/models"
 	"strconv"
@@ -85,6 +86,18 @@ func UpdateUserInfosByUID(infos *models.ParamInfos) (err error) {
 	gender, _ := strconv.ParseInt(infos.Gender, 10, 8)
 	_, err = db.Exec(sqlStr, infos.Username, infos.Phone, infos.Email, infos.Avatar, gender, uid)
 	return
+}
+
+// UpdateAvatarByUID 使用用户ID修改用户头像
+func UpdateAvatarByUID(id int64, path string) error {
+	sqlStr := `update ums_user set avatar = ? where user_id = ?`
+	res, err := db.Exec(sqlStr, path, id)
+	affectRow, _ := res.RowsAffected()
+	if affectRow == 0 {
+		zap.L().Error("dao user update avatar affect row is 0", zap.Error(err), zap.Int64("uid", id))
+		return errors.New("修改失败")
+	}
+	return err
 }
 
 // encryptPass 使用秘钥采用md5算法加密用户密码

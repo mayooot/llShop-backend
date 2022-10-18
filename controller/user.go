@@ -294,12 +294,21 @@ func UserInfoUpdateAvatarHandler(c *gin.Context) {
 	}
 
 	// 上传头像到阿里云OSS
-	url, err := oss.UploadPic(file)
-	if err != nil || url == "" {
+	path, err := oss.UploadPic(file)
+	if err != nil || path == "" {
 		// 上传失败
 		ResponseError(c, CodeUploadAvatarFailed)
 		return
 	}
 
-	ResponseSuccessWithMsg(c, "更新成功✅", gin.H{"path": url})
+	// 获取用户ID
+	idStr := c.GetString("uid")
+	err = logic.UpdateUserAvatar(idStr, path)
+	if err != nil {
+		// 上传失败
+		ResponseError(c, CodeUploadAvatarFailed)
+		return
+	}
+
+	ResponseSuccessWithMsg(c, "更新成功✅", nil)
 }

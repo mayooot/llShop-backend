@@ -9,6 +9,7 @@ import (
 	"shop-backend/models"
 	"shop-backend/utils/check"
 	"shop-backend/utils/gen"
+	"strconv"
 )
 
 var (
@@ -74,7 +75,6 @@ func SignUp(u *models.ParamSignUp) error {
 
 	// 生成uid
 	uid := gen.GenSnowflakeId()
-
 	// 构建user实例
 	user := &models.User{
 		UserID: uid,
@@ -148,4 +148,14 @@ func UpdateInfos(infos *models.ParamInfos) (err error) {
 func SignOut(idStr string) (err error) {
 	err = redis.DelAccessTokenByUID(idStr)
 	return
+}
+
+// UpdateUserAvatar 修改用户头像
+func UpdateUserAvatar(idStr, path string) error {
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		zap.L().Error("UpdateUserAvatar strconv.ParseInt(idStr) failed", zap.Error(err))
+		return err
+	}
+	return mysql.UpdateAvatarByUID(id, path)
 }

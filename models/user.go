@@ -7,6 +7,7 @@ type User struct {
 	Username string `db:"username"`
 	Phone    string `db:"phone"`
 	Password string `db:"password"`
+	Avatar   string `db:"avatar"`
 }
 
 // SomeInfo 用户简略信息
