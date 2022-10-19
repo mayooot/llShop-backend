@@ -34,8 +34,8 @@ redis:
   pool_size: 100
 
 aliyun:
-  access_key_id: ""
-  access_key_secret: ""
+  access_key_id: "LTAI5t9VK6bCp6BXLxxDz1yU"
+  access_key_secret: "2B5t4nLS8d9sHrUE3htTAM3T1YAKOl"
   oss:
     endpoint: "https://oss-cn-zhangjiakou.aliyuncs.com"
     bucket_name: "llshop-project"

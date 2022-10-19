@@ -2,10 +2,8 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"math"
 	"shop-backend/logic"
 	"shop-backend/models/dto"
 	"shop-backend/utils/check"
@@ -19,7 +17,7 @@ import (
 // @Tags 用户相关接口
 // @Produce  json
 // @Param phone query string true "手机号"
-// @Router /phone [get]
+// @Router /user/phone [get]
 func SendVerifyCodeHandler(c *gin.Context) {
 	// 获取参数
 	phone := c.Query("phone")
@@ -62,7 +60,7 @@ func SendVerifyCodeHandler(c *gin.Context) {
 // @Tags 用户相关接口
 // @Produce json
 // @Param ParamSignUp body dto.ParamSignUp true "用户注册结构体"
-// @Router /signup [post]
+// @Router /user/signup [post]
 func SignUpHandler(c *gin.Context) {
 	// 获取参数并校验
 	p := new(dto.ParamSignUp)
@@ -110,7 +108,7 @@ func SignUpHandler(c *gin.Context) {
 // @Tags 用户相关接口
 // @Produce  json
 // @Param ParamLogin body dto.ParamLogin true "用户登录结构体"
-// @Router /login [post]
+// @Router /user/login [post]
 func LoginHandler(c *gin.Context) {
 	// 获取参数并校验
 	p := new(dto.ParamLogin)
@@ -132,7 +130,6 @@ func LoginHandler(c *gin.Context) {
 			return
 		}
 	}
-	fmt.Println(math.MaxInt64)
 	ResponseSuccessWithMsg(c, "登录成功", gin.H{
 		// 前端json能接受的整数范围为 - (2^53 -1) ~ 2^53 - 1，而我们要传递的是int64，所以要转化成字符串
 		"userId":       strconv.FormatInt(uid, 10),
@@ -143,13 +140,12 @@ func LoginHandler(c *gin.Context) {
 
 // SomeInfoHandler 获取用户头像、用户名和购物车数量
 // @Summary 获取用户头像、用户名和购物车数量。
-// @Description 前端传递用户ID，后端返回用户头像、用户名和购物车数量。
+// @Description 后端返回用户头像、用户名和购物车数量。
 // @Tags 用户相关接口
 // @Produce json
 // @Security x-token
-// @param Authorization header string true "Bearer token"
-// @Param id path string true "用户ID"
-// @Router /someinfo [get]
+// @param Authorization header string true "Bearer AToken&RToken"
+// @Router /user/someinfo [get]
 func SomeInfoHandler(c *gin.Context) {
 	// 获取用户简略信息
 	infos, err := logic.GetSomeInfo(c.GetInt64("uid"))
@@ -163,13 +159,12 @@ func SomeInfoHandler(c *gin.Context) {
 
 // UserInfosHandler 获取用户详细的个人信息
 // @Summary 获取用户个人信息
-// @Description 前端传递用户ID，后端返回用户个人信息。
+// @Description 后端返回用户个人信息。
 // @Tags 用户相关接口
 // @Produce json
 // @Security x-token
-// @param Authorization header string true "Bearer token"
-// @Param id path string true "用户ID"
-// @Router /infos/{id} [get]
+// @param Authorization header string true "Bearer AToken&RToken"
+// @Router /user/infos [get]
 func UserInfosHandler(c *gin.Context) {
 	infos, err := logic.GetUserInfos(c.GetInt64("uid"))
 	if err != nil {
@@ -185,9 +180,9 @@ func UserInfosHandler(c *gin.Context) {
 // @Tags 用户相关接口
 // @Produce json
 // @Security x-token
-// @param Authorization header string true "Bearer token"
+// @param Authorization header string true "Bearer AToken&RToken"
 // @Param param body dto.ParamInfos true "用户个人信息结构体"
-// @Router /infos/update [put]
+// @Router /user/infos/update [put]
 func UserInfosUpdateHandler(c *gin.Context) {
 	infos := new(dto.ParamInfos)
 	infos.ID = strconv.FormatInt(c.GetInt64("uid"), 10)
@@ -225,13 +220,12 @@ func UserInfosUpdateHandler(c *gin.Context) {
 
 // SignOutHandler 用户退出
 // @Summary 用户退出
-// @Description 前端传递UserID，后端清空Redis中AccessToken。
+// @Description 后端清空Redis中AccessToken
 // @Tags 用户相关接口
 // @Produce  json
 // @Security x-token
-// @param Authorization header string true "Bearer token"
-// @Param id path string true "用户ID"
-// @Router /exit [delete]
+// @param Authorization header string true "Bearer AToken&RToken"
+// @Router /user/exit [delete]
 func SignOutHandler(c *gin.Context) {
 	err := logic.SignOut(c.GetString("uid"))
 	if err != nil {
@@ -243,12 +237,12 @@ func SignOutHandler(c *gin.Context) {
 
 // UserInfoUpdateAvatarHandler 更新用户头像
 // @Summary 用户更新头像
-// @Description 前端上传图片，后端返回图片路径。
+// @Description 前端上传图片，后端将头像上传到阿里云OSS后，修改用户头像。
 // @Tags 用户相关接口
 // @Produce  json
 // @Security x-token
-// @param Authorization header string true "Bearer AToken"
-// @Router /infos/update/avatar [post]
+// @param Authorization header string true "Bearer AToken&RToken"
+// @Router /user/infos/update/avatar [post]
 func UserInfoUpdateAvatarHandler(c *gin.Context) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {

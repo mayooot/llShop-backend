@@ -105,17 +105,17 @@ func Login(p *dto.ParamLogin) (uid int64, aToken, rToken string, err error) {
 		Password: p.Password,
 	}
 
-	if ok := mysql.SelectUserByPhoneAndPass(user); !ok {
+	if uid, ok = mysql.SelectUserByPhoneAndPass(user); !ok {
 		// 用户输入密码错误
 		err = ErrorWrongPass
 		return
 	}
 
 	// 用户校验通过，生成AccessToken和RefreshToken
-	aToken, rToken, err = gen.GenToken(user.ID)
+	aToken, rToken, err = gen.GenToken(uid)
 
 	// 将AccessToken缓存到Redis中，用来完成同一时间只有一台设备可以登录
-	err = redis.SetAccessToken(user.ID, aToken)
+	err = redis.SetAccessToken(uid, aToken)
 	if err != nil {
 		// 插入AccessToken失败
 		err = ErrorServeBusy

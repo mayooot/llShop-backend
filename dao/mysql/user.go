@@ -46,23 +46,23 @@ func SelectUserByPhone(phone string) (exist bool) {
 }
 
 // SelectUserByPhoneAndPass 通过手机号和密码校验用户是否存在
-func SelectUserByPhoneAndPass(u *po.UmsUser) bool {
+func SelectUserByPhoneAndPass(u *po.UmsUser) (int64, bool) {
 	// 用户未加密密码
 	originPass := u.Password
 	// 通过手机号查询
 	result := db.Where("phone = ?", u.Phone).First(u)
 	if result.Error != nil {
 		zap.L().Error("db.Where(\"phone = ?\", u.Phone).First(u) failed", zap.Error(result.Error))
-		return false
+		return 0, false
 	}
 	// 判断用户密码是否正确
 	pass := encryptPass(originPass)
 	if pass != u.Password {
 		// 密码错误
-		return false
+		return 0, false
 	}
 	// 登录成功
-	return true
+	return u.ID, true
 }
 
 // SelectSomeInfoByUID 获取用户购物车数量、用户头像、用户名称
