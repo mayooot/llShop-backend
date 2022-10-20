@@ -7,7 +7,7 @@ import (
 	"shop-backend/dao/mysql"
 	"shop-backend/dao/redis"
 	"shop-backend/models/dto"
-	"shop-backend/models/po"
+	"shop-backend/models/pojo"
 	"shop-backend/models/vo"
 	"shop-backend/utils/check"
 	"shop-backend/utils/gen"
@@ -76,7 +76,7 @@ func SignUp(u *dto.ParamSignUp) error {
 
 	// 生成uid
 	uid := gen.GenSnowflakeId()
-	user := &po.UmsUser{
+	user := &pojo.UmsUser{
 		ID:       uid,
 		Username: randomname.GenerateName(),
 		Password: u.Password,
@@ -100,7 +100,7 @@ func Login(p *dto.ParamLogin) (uid int64, aToken, rToken string, err error) {
 	}
 
 	// 构建User实例
-	user := &po.UmsUser{
+	user := &pojo.UmsUser{
 		Phone:    p.Phone,
 		Password: p.Password,
 	}

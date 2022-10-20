@@ -25,18 +25,17 @@ func SetupRouter(mode string) *gin.Engine {
 
 	// 普通路由组，只包含跨域、日志、恢复中间件
 	commonGroup := r.Group("/api")
-	userGroup := commonGroup.Group("/user")
+	umsGroup := commonGroup.Group("/user")
 	{
 		// 获取验证码
-		userGroup.GET("/phone", controller.SendVerifyCodeHandler)
+		umsGroup.GET("/phone", controller.SendVerifyCodeHandler)
 		// 注册
-		userGroup.POST("/signup", controller.SignUpHandler)
+		umsGroup.POST("/signup", controller.SignUpHandler)
 		// 登录
-		userGroup.POST("/login", controller.LoginHandler)
+		umsGroup.POST("/login", controller.LoginHandler)
 	}
-
 	// 鉴权路由组，包含JWT校验中间件，限制用户多端登录中间件
-	jwtGroup := userGroup
+	jwtGroup := umsGroup
 	jwtGroup.Use(middleware.JWTAuthMiddleware())
 	{
 		// 获取用户简略信息，用于商城header显示
@@ -49,6 +48,13 @@ func SetupRouter(mode string) *gin.Engine {
 		jwtGroup.POST("/infos/update/avatar", controller.UserInfoUpdateAvatarHandler)
 		// 用户退出
 		jwtGroup.DELETE("/exit", controller.SignOutHandler)
+	}
+
+	// 商品路由组
+	pmsGroup := commonGroup.Group("/pms/product")
+	{
+		pmsGroup.GET("/category/list", controller.CategoryListHandler)
+		pmsGroup.GET("/attribute/bycategory/:categoryID", controller.AttributeByCategoryIDHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

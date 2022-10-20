@@ -191,12 +191,6 @@ func UserInfosUpdateHandler(c *gin.Context) {
 		ResponseError(c, CodeInvalidParams)
 		return
 	}
-	if _, err := strconv.ParseInt(infos.Gender, 10, 8); err != nil {
-		// 校验性别字符串
-		ResponseError(c, CodeInvalidParams)
-		return
-	}
-
 	// 参数格式校验
 	if !check.VerifyUsernameFormat(infos.Username) {
 		ResponseError(c, CodeUsernameToLongOrToShort)
@@ -215,7 +209,7 @@ func UserInfosUpdateHandler(c *gin.Context) {
 	if err != nil {
 		ResponseError(c, CodeUpdateInfosFailed)
 	}
-	ResponseSuccessWithMsg(c, "更新成功", infos)
+	ResponseSuccessWithMsg(c, "更新成功", nil)
 }
 
 // SignOutHandler 用户退出

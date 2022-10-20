@@ -22,5 +22,5 @@ type ParamInfos struct {
 	Phone    string `json:"phone"`
 	Password string `json:"password"`
 	Email    string `json:"email"`
-	Gender   string `json:"gender"`
+	Gender   int8   `json:"gender"`
 }

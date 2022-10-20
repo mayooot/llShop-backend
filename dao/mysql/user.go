@@ -7,17 +7,16 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"shop-backend/models/dto"
-	"shop-backend/models/po"
+	"shop-backend/models/pojo"
 	"shop-backend/models/vo"
 	"strconv"
-	"time"
 )
 
 // 数据加密秘钥
 const secret = "shop-backend"
 
 // InsertUser 插入一条用户数据
-func InsertUser(u *po.UmsUser) error {
+func InsertUser(u *pojo.UmsUser) error {
 	// 密码加密
 	u.Password = encryptPass(u.Password)
 	// 入库
@@ -33,20 +32,20 @@ func InsertUser(u *po.UmsUser) error {
 // SelectUserByPhone 通过手机号查询用户是否已经注册。用户存在返回true，否则返回false
 func SelectUserByPhone(phone string) (exist bool) {
 	// 通过手机号查询
-	result := db.Where("phone = ?", phone).First(&po.UmsUser{})
+	result := db.Where("phone = ?", phone).First(&pojo.UmsUser{})
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			// 如果是error是记录不存在异常，说明用户不存在，返回false
 			return false
 		} // 反之，认为用户已经存在
-		zap.L().Error("db.Where(\"phone = ?\", phone).First(&po.UmsUser{}) failed", zap.Error(result.Error))
+		zap.L().Error("db.Where(\"phone = ?\", phone).First(&pojo.UmsUser{}) failed", zap.Error(result.Error))
 		return true
 	}
 	return true
 }
 
 // SelectUserByPhoneAndPass 通过手机号和密码校验用户是否存在
-func SelectUserByPhoneAndPass(u *po.UmsUser) (int64, bool) {
+func SelectUserByPhoneAndPass(u *pojo.UmsUser) (int64, bool) {
 	// 用户未加密密码
 	originPass := u.Password
 	// 通过手机号查询
@@ -67,7 +66,7 @@ func SelectUserByPhoneAndPass(u *po.UmsUser) (int64, bool) {
 
 // SelectSomeInfoByUID 获取用户购物车数量、用户头像、用户名称
 func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
-	var user = new(po.UmsUser)
+	var user = new(pojo.UmsUser)
 	result := db.Where("user_id", uid).First(user)
 	if result.Error != nil {
 		zap.L().Error("db.Where(\"user_id\", uid).First(user) failed", zap.Error(result.Error))
@@ -75,8 +74,8 @@ func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
 	}
 	// 封装SomeInfo对象
 	info := &vo.SomeInfo{
-		Avatar:   user.Username,
-		Username: user.Avatar,
+		Avatar:   user.Avatar,
+		Username: user.Username,
 		// todo 联查用户购物车表
 		CartNum: 0,
 	}
@@ -85,7 +84,7 @@ func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
 
 // SelectInofsByUID 查询用户详细信息
 func SelectInofsByUID(uid int64) (*vo.UserInfos, error) {
-	var user = new(po.UmsUser)
+	var user = new(pojo.UmsUser)
 	result := db.Where("user_id", uid).First(user)
 	if result.Error != nil {
 		zap.L().Error("db.Where(\"user_id\", uid).First(user)", zap.Error(result.Error))
@@ -93,13 +92,13 @@ func SelectInofsByUID(uid int64) (*vo.UserInfos, error) {
 	}
 	// 封装UserInfos对象
 	infos := &vo.UserInfos{
-		Id:         user.ID,
-		Username:   user.Username,
-		Phone:      user.Phone,
-		Email:      user.Email,
-		Avatar:     user.Avatar,
-		Gender:     user.Gender,
-		CreateTime: user.CreateTime,
+		Id:          user.ID,
+		Username:    user.Username,
+		Phone:       user.Phone,
+		Email:       user.Email,
+		Avatar:      user.Avatar,
+		Gender:      user.Gender,
+		CreatedTime: user.CreateTime,
 	}
 	return infos, nil
 }
@@ -107,23 +106,12 @@ func SelectInofsByUID(uid int64) (*vo.UserInfos, error) {
 // UpdateUserInfosByUID 修改用户个人信息
 func UpdateUserInfosByUID(infos *dto.ParamInfos) error {
 	id, _ := strconv.ParseInt(infos.ID, 10, 64)
-	gender, _ := strconv.ParseInt(infos.Gender, 10, 8)
-	user := &po.UmsUser{
-		ID:         id,
-		Username:   infos.Username,
-		Password:   encryptPass(infos.Password),
-		Email:      infos.Email,
-		Phone:      infos.Phone,
-		Gender:     int8(gender),
-		CreateTime: time.Time{},
-		UpdateTime: time.Time{},
-	}
-	result := db.Model(user).Updates(po.UmsUser{
+	result := db.Model(&pojo.UmsUser{ID: id}).Updates(pojo.UmsUser{
 		Username: infos.Username,
 		Password: encryptPass(infos.Password),
 		Email:    infos.Email,
 		Phone:    infos.Phone,
-		Gender:   1,
+		Gender:   infos.Gender,
 	})
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) || result.RowsAffected == 0 {
 		// 如果有异常为不存在该记录异常或者影响的行数为0，说明用户不存在
@@ -134,7 +122,7 @@ func UpdateUserInfosByUID(infos *dto.ParamInfos) error {
 
 // UpdateAvatarByUID 使用用户ID修改用户头像
 func UpdateAvatarByUID(id int64, path string) error {
-	result := db.Model(&po.UmsUser{ID: id}).Update("avatar", path)
+	result := db.Model(&pojo.UmsUser{ID: id}).Update("avatar", path)
 	return result.Error
 }
 
