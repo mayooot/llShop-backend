@@ -98,7 +98,7 @@ func SelectInofsByUID(uid int64) (*vo.UserInfos, error) {
 		Email:       user.Email,
 		Avatar:      user.Avatar,
 		Gender:      user.Gender,
-		CreatedTime: user.CreateTime,
+		CreatedTime: user.CreatedTime,
 	}
 	return infos, nil
 }
