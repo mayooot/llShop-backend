@@ -30,16 +30,16 @@ func SetupRouter(mode string) *gin.Engine {
 		// 获取验证码
 		umsGroup.GET("/phone", controller.SendVerifyCodeHandler)
 		// 注册
-		umsGroup.POST("/signup", controller.SignUpHandler)
+		umsGroup.POST("/signup", controller.UserSignUpHandler)
 		// 登录
-		umsGroup.POST("/login", controller.LoginHandler)
+		umsGroup.POST("/login", controller.UserLoginHandler)
 	}
 	// 鉴权路由组，包含JWT校验中间件，限制用户多端登录中间件
 	jwtGroup := umsGroup
 	jwtGroup.Use(middleware.JWTAuthMiddleware())
 	{
 		// 获取用户简略信息，用于商城header显示
-		jwtGroup.GET("/someinfo", controller.SomeInfoHandler)
+		jwtGroup.GET("/someinfo", controller.UserSomeInfoHandler)
 		// 获取用户个人信息，用于个人资料显示
 		jwtGroup.GET("/infos", controller.UserInfosHandler)
 		// 用户修改个人资料
@@ -47,14 +47,17 @@ func SetupRouter(mode string) *gin.Engine {
 		// 用户修改头像
 		jwtGroup.POST("/infos/update/avatar", controller.UserInfoUpdateAvatarHandler)
 		// 用户退出
-		jwtGroup.DELETE("/exit", controller.SignOutHandler)
+		jwtGroup.DELETE("/exit", controller.UserSignOutHandler)
 	}
 
 	// 商品路由组
 	pmsGroup := commonGroup.Group("/pms/product")
 	{
-		pmsGroup.GET("/category/list", controller.CategoryListHandler)
-		pmsGroup.GET("/attribute/bycategory/:categoryID", controller.AttributeByCategoryIDHandler)
+		// 商品分类
+		pmsGroup.GET("/category/list", controller.ProductCategoryListHandler)
+		// 商品分类的属性列表
+		pmsGroup.GET("/attribute/bycategory/:categoryID", controller.ProductAttributeByCategoryIDHandler)
+		pmsGroup.GET("/search", controller.ProductSearchHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

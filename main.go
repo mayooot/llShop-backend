@@ -24,7 +24,7 @@ import (
 // @description llShop后端接口API
 // @license.name Apache 2.0
 // @termsOfService https://github.com/mayooot/llShop-backend
-// @host 172.20.10.8:9090
+// @host 192.168.1.104:9090
 // @BasePath /api
 func main() {
 	// 加载配置

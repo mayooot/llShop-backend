@@ -1,7 +1,5 @@
 package dto
 
-// 封装请求参数的结构体
-
 // ParamSignUp 封装用户注册的请求体
 type ParamSignUp struct {
 	Phone    string `json:"phone" binding:"required"`

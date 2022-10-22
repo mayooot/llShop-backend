@@ -54,14 +54,14 @@ func SendVerifyCodeHandler(c *gin.Context) {
 	})
 }
 
-// SignUpHandler 用户注册
+// UserSignUpHandler 用户注册
 // @Summary 注册用户
 // @Description 前端传递JSON类型对象，后端完成校验后注册新用户。
 // @Tags 用户相关接口
 // @Produce json
 // @Param ParamSignUp body dto.ParamSignUp true "用户注册结构体"
 // @Router /user/signup [post]
-func SignUpHandler(c *gin.Context) {
+func UserSignUpHandler(c *gin.Context) {
 	// 获取参数并校验
 	p := new(dto.ParamSignUp)
 	if err := c.ShouldBindJSON(p); err != nil {
@@ -102,14 +102,14 @@ func SignUpHandler(c *gin.Context) {
 	ResponseSuccessWithMsg(c, "注册成功，请登录", nil)
 }
 
-// LoginHandler 用户登录
+// UserLoginHandler 用户登录
 // @Summary 用户登录
 // @Description 前端传递JSON类型对象，后端完成校验后登录，返回AccessToken和RefreshToken、UserID。
 // @Tags 用户相关接口
 // @Produce  json
 // @Param ParamLogin body dto.ParamLogin true "用户登录结构体"
 // @Router /user/login [post]
-func LoginHandler(c *gin.Context) {
+func UserLoginHandler(c *gin.Context) {
 	// 获取参数并校验
 	p := new(dto.ParamLogin)
 	if err := c.ShouldBindJSON(p); err != nil {
@@ -138,7 +138,7 @@ func LoginHandler(c *gin.Context) {
 	})
 }
 
-// SomeInfoHandler 获取用户头像、用户名和购物车数量
+// UserSomeInfoHandler 获取用户头像、用户名和购物车数量
 // @Summary 获取用户头像、用户名和购物车数量。
 // @Description 后端返回用户头像、用户名和购物车数量。
 // @Tags 用户相关接口
@@ -146,7 +146,7 @@ func LoginHandler(c *gin.Context) {
 // @Security x-token
 // @param Authorization header string true "Bearer AToken&RToken"
 // @Router /user/someinfo [get]
-func SomeInfoHandler(c *gin.Context) {
+func UserSomeInfoHandler(c *gin.Context) {
 	// 获取用户简略信息
 	infos, err := logic.GetSomeInfo(c.GetInt64("uid"))
 	if err != nil {
@@ -212,7 +212,7 @@ func UserInfosUpdateHandler(c *gin.Context) {
 	ResponseSuccessWithMsg(c, "更新成功", nil)
 }
 
-// SignOutHandler 用户退出
+// UserSignOutHandler 用户退出
 // @Summary 用户退出
 // @Description 后端清空Redis中AccessToken
 // @Tags 用户相关接口
@@ -220,7 +220,7 @@ func UserInfosUpdateHandler(c *gin.Context) {
 // @Security x-token
 // @param Authorization header string true "Bearer AToken&RToken"
 // @Router /user/exit [delete]
-func SignOutHandler(c *gin.Context) {
+func UserSignOutHandler(c *gin.Context) {
 	err := logic.SignOut(c.GetString("uid"))
 	if err != nil {
 		ResponseError(c, CodeSignOutFailed)
