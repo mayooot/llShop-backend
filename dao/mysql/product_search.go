@@ -24,7 +24,6 @@ func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.
 	db.Joins("LEFT JOIN pms_product_attribute ON pms_product_attribute.id = pms_product_attribute_rel.product_attribute_id")
 	// 每个sku在pms_sku中都有多个规格，is_default取值为0和1，1代表默认规格
 	db.Where("pms_sku.is_default = ?", 1)
-
 	if condition.Keyword != "" {
 		// sku表 搜索关键字不为空
 		db.Where("title like ?", concatstr.ConcatString("%", condition.Keyword, "%"))
@@ -71,14 +70,13 @@ func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.
 		}
 	}
 
-	if condition.PageSize != "" && condition.PageNo != "" && needLimit {
-		// sku表 分页信息不为空
-		limit, err := strconv.Atoi(condition.PageSize)
+	if needLimit {
+		pageSize, err := strconv.Atoi(condition.PageSize)
 		if err != nil {
 			zap.L().Error("PageSize转换为整型失败", zap.Error(err))
 			return nil, 0, err
 		}
-		if limit > MAXRecord {
+		if pageSize > MAXRecord {
 			zap.L().Error("超过单次查询最大记录条数", zap.Error(ErrorExceedMaxRecord))
 			return nil, 0, ErrorExceedMaxRecord
 		}
@@ -88,11 +86,12 @@ func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.
 			zap.L().Error("PageNo转换为整型失败", zap.Error(err))
 			return nil, 0, err
 		}
-
 		// 分页
-		db.Limit(limit).Offset(pageNo)
+		db.Limit(pageSize).Offset(pageNo)
 	}
 
+	// 分组去重
+	db.Group("pms_sku.id")
 	result := db.Debug().Find(&data)
 	if result.Error != nil {
 		zap.L().Error("使用搜索条件查询数据库失败", zap.Error(result.Error))

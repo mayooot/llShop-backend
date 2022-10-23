@@ -13,3 +13,11 @@ type Page[T Pageable] struct {
 	// 数据集合
 	Data T `json:"data"`
 }
+
+// NewPage 初始化Page对象，并指定分页字段默认值
+// func NewPage[T Pageable]() *Page[T] {
+// 	page := Page[T]{}
+// 	page.PageNo = strconv.Itoa(1)
+// 	page.PageSize = strconv.Itoa(20)
+// 	return &page
+// }
