@@ -17,13 +17,14 @@
 🎨第三方库:
 
 * viper: 配置文件的读取，修改时自动加载新的配置
+* zap: 日志记录
+* swaggo: 生成Swagger接口文档
+* validator: 参数校验
+* air: 程序热启动
 * snowflake: 生成分布式唯一ID
 * jwt-go: 前后端身份认证
 * fsnotify: 监听文件或目录，配合viper使用
-* swaggo: 生成Swagger接口文档
-* zap: 日志记录
 * lumberjack: 配置zap，实现日志的滚动记录
-* air: 程序热启动
 * ratelimit: 令牌桶限流
 
 🎏目录结构:
@@ -54,3 +55,4 @@
 #### 🦦商品模块
 * 商品分类信息
 * 商品属性
+* 商品搜索功能

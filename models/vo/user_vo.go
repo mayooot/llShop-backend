@@ -17,6 +17,6 @@ type UserInfos struct {
 	Phone       string    `json:"phone" `
 	Email       string    `json:"email" `
 	Avatar      string    `json:"avatar" `
-	Gender      int8      `json:"gender" `
+	Gender      uint8     `json:"gender" `
 	CreatedTime time.Time `json:"createdTime" `
 }

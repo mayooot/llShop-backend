@@ -18,6 +18,7 @@ func ProductAttributeByCategoryIDHandler(c *gin.Context) {
 	categoryIDStr := c.Param("categoryID")
 	categoryID, err := strconv.ParseInt(categoryIDStr, 10, 64)
 	if err != nil {
+		zap.L().Error("通过二级分类ID获取商品属性接口, 请求参数有误", zap.Error(err))
 		ResponseError(c, CodeInvalidParams)
 		return
 	}

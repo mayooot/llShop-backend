@@ -6,7 +6,7 @@ import (
 	"shop-backend/settings"
 )
 
-// CheckPass 校验密码强度，必须存在特殊字符、大小写字母和数字，长度在8 ~ 15之间
+// CheckPass 校验密码强度，必须存在特殊字符、大小写字母和数字，校验密码长度
 func CheckPass(pass string) error {
 	minLength := settings.Conf.UserConfig.MinPassLen
 	maxLength := settings.Conf.UserConfig.MaxPassLen

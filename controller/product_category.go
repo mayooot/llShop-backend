@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"shop-backend/logic"
 )
 
@@ -14,6 +15,7 @@ import (
 func ProductCategoryListHandler(c *gin.Context) {
 	categories, err := logic.GetAllCategory()
 	if err != nil {
+		zap.L().Error("获取商品分类信息失败", zap.Error(err))
 		ResponseError(c, CodeRequestAllCategoryFailed)
 	}
 	ResponseSuccess(c, categories)

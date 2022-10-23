@@ -23,7 +23,7 @@ func InsertUser(u *pojo.UmsUser) error {
 	result := db.Create(u)
 	if result.Error != nil || result.RowsAffected == 0 {
 		// 如果有异常或者影响的行数为0
-		zap.L().Error("db.Create(u) failed", zap.Error(result.Error))
+		zap.L().Error("插入一条用户数据失败", zap.Error(result.Error))
 		return result.Error
 	}
 	return nil
@@ -38,7 +38,7 @@ func SelectUserByPhone(phone string) (exist bool) {
 			// 如果是error是记录不存在异常，说明用户不存在，返回false
 			return false
 		} // 反之，认为用户已经存在
-		zap.L().Error("db.Where(\"phone = ?\", phone).First(&pojo.UmsUser{}) failed", zap.Error(result.Error))
+		zap.L().Error("用户已存在", zap.Error(result.Error), zap.String("phone", phone))
 		return true
 	}
 	return true
@@ -51,13 +51,14 @@ func SelectUserByPhoneAndPass(u *pojo.UmsUser) (int64, bool) {
 	// 通过手机号查询
 	result := db.Where("phone = ?", u.Phone).First(u)
 	if result.Error != nil {
-		zap.L().Error("db.Where(\"phone = ?\", u.Phone).First(u) failed", zap.Error(result.Error))
+		zap.L().Error("通过手机号查询用户失败或记录为空", zap.Error(result.Error))
 		return 0, false
 	}
 	// 判断用户密码是否正确
 	pass := encryptPass(originPass)
 	if pass != u.Password {
 		// 密码错误
+		zap.L().Error("用户输入密码错误", zap.Error(result.Error), zap.String("input pass", originPass))
 		return 0, false
 	}
 	// 登录成功
@@ -69,7 +70,7 @@ func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
 	var user = new(pojo.UmsUser)
 	result := db.Where("user_id", uid).First(user)
 	if result.Error != nil {
-		zap.L().Error("db.Where(\"user_id\", uid).First(user) failed", zap.Error(result.Error))
+		zap.L().Error("获取用户购物车数量、用户头像、用户名称失败", zap.Error(result.Error))
 		return nil, result.Error
 	}
 	// 封装SomeInfo对象
@@ -82,12 +83,12 @@ func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
 	return info, result.Error
 }
 
-// SelectInofsByUID 查询用户详细信息
-func SelectInofsByUID(uid int64) (*vo.UserInfos, error) {
+// SelectInfosByUID 查询用户详细信息
+func SelectInfosByUID(uid int64) (*vo.UserInfos, error) {
 	var user = new(pojo.UmsUser)
 	result := db.Where("user_id", uid).First(user)
 	if result.Error != nil {
-		zap.L().Error("db.Where(\"user_id\", uid).First(user)", zap.Error(result.Error))
+		zap.L().Error("查询用户详细信息失败", zap.Error(result.Error))
 		return nil, result.Error
 	}
 	// 封装UserInfos对象
@@ -104,7 +105,7 @@ func SelectInofsByUID(uid int64) (*vo.UserInfos, error) {
 }
 
 // UpdateUserInfosByUID 修改用户个人信息
-func UpdateUserInfosByUID(infos *dto.ParamInfos) error {
+func UpdateUserInfosByUID(infos *dto.Infos) error {
 	id, _ := strconv.ParseInt(infos.ID, 10, 64)
 	result := db.Model(&pojo.UmsUser{ID: id}).Updates(pojo.UmsUser{
 		Username: infos.Username,
@@ -115,6 +116,7 @@ func UpdateUserInfosByUID(infos *dto.ParamInfos) error {
 	})
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) || result.RowsAffected == 0 {
 		// 如果有异常为不存在该记录异常或者影响的行数为0，说明用户不存在
+		zap.L().Error("修改用户信息失败", zap.Error(result.Error))
 		return result.Error
 	}
 	return nil
@@ -123,7 +125,11 @@ func UpdateUserInfosByUID(infos *dto.ParamInfos) error {
 // UpdateAvatarByUID 使用用户ID修改用户头像
 func UpdateAvatarByUID(id int64, path string) error {
 	result := db.Model(&pojo.UmsUser{ID: id}).Update("avatar", path)
-	return result.Error
+	if result.Error != nil {
+		zap.L().Error("修改用户头像数据库记录失败", zap.Error(result.Error))
+		return result.Error
+	}
+	return nil
 }
 
 // encryptPass 使用秘钥采用md5算法加密用户密码

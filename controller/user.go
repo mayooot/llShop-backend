@@ -22,14 +22,14 @@ func SendVerifyCodeHandler(c *gin.Context) {
 	// 获取参数
 	phone := c.Query("phone")
 	if phone == "" {
-		zap.L().Error("The mobile phone number field is empty.")
 		// phone字段为空
+		zap.L().Error("获取验证码接口, 用户手机号为空")
 		ResponseError(c, CodePhoneIsNotEmpty)
 		return
 	}
 	if ok := check.VerifyMobileFormat(phone); !ok {
 		// 手机号格式不正确
-		zap.L().Error("The format of the mobile phone number is wrong.")
+		zap.L().Error("获取验证码接口, 用户手机号格式错误")
 		ResponseError(c, CodePhoneFormatError)
 		return
 	}
@@ -39,16 +39,16 @@ func SendVerifyCodeHandler(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, logic.ErrorRequestCodeFrequent) {
 			// 用户频繁请求验证码
-			zap.L().Warn("The verification code is frequently obtained.", zap.String("phone", phone))
+			zap.L().Warn("获取验证码接口, 用户频繁获取验证码", zap.String("phone", phone))
 			ResponseError(c, CodeRequestCodeFrequently)
 			return
 		}
 		// 生成、发送验证码失败
-		zap.L().Error("Failed to send verification code.")
+		zap.L().Error("获取验证码接口, 发送验证码失败", zap.String("phone", phone))
 		ResponseError(c, CodeServeBusy)
 		return
 	}
-	zap.L().Info("Verification code sent successfully.", zap.String("code", code))
+	zap.L().Info("发送验证码成功", zap.String("code", code))
 	ResponseSuccessWithMsg(c, "发送成功，验证码五分钟内有效", gin.H{
 		"code": code,
 	})
@@ -59,20 +59,29 @@ func SendVerifyCodeHandler(c *gin.Context) {
 // @Description 前端传递JSON类型对象，后端完成校验后注册新用户。
 // @Tags 用户相关接口
 // @Produce json
-// @Param ParamSignUp body dto.ParamSignUp true "用户注册结构体"
+// @Param SignUp body dto.SignUp true "用户注册结构体"
 // @Router /user/signup [post]
 func UserSignUpHandler(c *gin.Context) {
 	// 获取参数并校验
-	p := new(dto.ParamSignUp)
+	p := new(dto.SignUp)
 	if err := c.ShouldBindJSON(p); err != nil {
 		// 请求参数有误
+		zap.L().Error("用户注册接口, 请求参数有误", zap.Error(err))
 		ResponseError(c, CodeInvalidParams)
 		return
 	}
 
 	if ok := check.VerifyMobileFormat(p.Phone); !ok {
 		// 手机号格式不正确
+		zap.L().Error("用户注册接口, 用户手机号格式错误")
 		ResponseError(c, CodePhoneFormatError)
+		return
+	}
+	// 校验密码强度
+	if err := check.CheckPass(p.Password); err != nil {
+		// 密码强度太低
+		zap.L().Error("用户注册接口，用户密码强度太低")
+		ResponseError(c, CodePassIsWeak)
 		return
 	}
 
@@ -81,18 +90,17 @@ func UserSignUpHandler(c *gin.Context) {
 	if err != nil {
 		if errors.Is(err, logic.ErrorUserIsRegistered) {
 			// 用户已注册
+			zap.L().Error("用户注册接口，用户已注册")
 			ResponseError(c, CodeUserIsRegistered)
 			return
 		} else if errors.Is(err, logic.ErrorWrongVerifyCode) {
 			// 如果验证码错误或过期
+			zap.L().Error("用户注册接口，验证码错误或已过期")
 			ResponseError(c, CodeWrongVerifyCode)
-			return
-		} else if errors.Is(err, logic.ErrorPassWeak) {
-			// 密码强度太低
-			ResponseError(c, CodePassIsWeak)
 			return
 		} else if errors.Is(err, logic.ErrorMustRequestCode) {
 			// 用户未获取验证码
+			zap.L().Error("用户注册接口，用户未获取验证码")
 			ResponseError(c, CodeMustRequestCode)
 			return
 		}
@@ -107,22 +115,25 @@ func UserSignUpHandler(c *gin.Context) {
 // @Description 前端传递JSON类型对象，后端完成校验后登录，返回AccessToken和RefreshToken、UserID。
 // @Tags 用户相关接口
 // @Produce  json
-// @Param ParamLogin body dto.ParamLogin true "用户登录结构体"
+// @Param Login body dto.Login true "用户登录结构体"
 // @Router /user/login [post]
 func UserLoginHandler(c *gin.Context) {
 	// 获取参数并校验
-	p := new(dto.ParamLogin)
+	p := new(dto.Login)
 	if err := c.ShouldBindJSON(p); err != nil {
 		// 请求参数有误
+		zap.L().Error("登录接口, 请求参数有误", zap.Error(err))
 		ResponseError(c, CodeInvalidParams)
 		return
 	}
 	uid, aToken, rToken, err := logic.Login(p)
 	if err != nil {
 		if errors.Is(err, logic.ErrorWrongPass) {
+			zap.L().Error("登录接口, 账户或密码错误", zap.String("phone", p.Phone), zap.String("pass", p.Password))
 			ResponseError(c, CodeUsernameOrPassError)
 			return
 		} else if errors.Is(err, logic.ErrorUserNotExist) {
+			zap.L().Error("登录接口, 用户不存在", zap.String("phone", p.Phone))
 			ResponseError(c, CodeUserNotExist)
 			return
 		} else {
@@ -150,7 +161,7 @@ func UserSomeInfoHandler(c *gin.Context) {
 	// 获取用户简略信息
 	infos, err := logic.GetSomeInfo(c.GetInt64("uid"))
 	if err != nil {
-		zap.L().Error("logic.GetSomeInfo(c.GetInt64(\"uid\") failed", zap.Error(err))
+		zap.L().Error("获取用户简略信息失败", zap.Int64("uid", c.GetInt64("uid")))
 		ResponseError(c, CodeServeBusy)
 		return
 	}
@@ -168,6 +179,7 @@ func UserSomeInfoHandler(c *gin.Context) {
 func UserInfosHandler(c *gin.Context) {
 	infos, err := logic.GetUserInfos(c.GetInt64("uid"))
 	if err != nil {
+		zap.L().Error("获取用户详细信息失败", zap.Int64("uid", c.GetInt64("uid")))
 		ResponseError(c, CodeServeBusy)
 		return
 	}
@@ -181,32 +193,37 @@ func UserInfosHandler(c *gin.Context) {
 // @Produce json
 // @Security x-token
 // @param Authorization header string true "Bearer AToken&RToken"
-// @Param param body dto.ParamInfos true "用户个人信息结构体"
+// @Param param body dto.Infos true "用户个人信息结构体"
 // @Router /user/infos/update [put]
 func UserInfosUpdateHandler(c *gin.Context) {
-	infos := new(dto.ParamInfos)
+	infos := new(dto.Infos)
 	infos.ID = strconv.FormatInt(c.GetInt64("uid"), 10)
 	if err := c.ShouldBindJSON(infos); err != nil {
 		// 请求参数有误
+		zap.L().Error("修改个人信息接口, 请求参数有误", zap.Error(err))
 		ResponseError(c, CodeInvalidParams)
 		return
 	}
 	// 参数格式校验
-	if !check.VerifyUsernameFormat(infos.Username) {
+	if infos.Username != "" && !check.VerifyUsernameFormat(infos.Username) {
+		zap.L().Error("修改个人信息接口, 用户名长度太长或太短")
 		ResponseError(c, CodeUsernameToLongOrToShort)
 		return
 	}
-	if !check.VerifyMobileFormat(infos.Phone) {
+	if infos.Phone != "" && !check.VerifyMobileFormat(infos.Phone) {
+		zap.L().Error("修改个人信息接口, 手机号格式错误")
 		ResponseError(c, CodePhoneFormatError)
 		return
 	}
-	if !check.VerifyEmailFormat(infos.Email) {
+	if infos.Email != "" && !check.VerifyEmailFormat(infos.Email) {
+		zap.L().Error("修改个人信息接口, 邮箱格式错误")
 		ResponseError(c, CodeEmailFormatError)
 		return
 	}
 
 	err := logic.UpdateInfos(infos)
 	if err != nil {
+		zap.L().Error("修改个人信息接口, 更新个人信息失败", zap.Error(err))
 		ResponseError(c, CodeUpdateInfosFailed)
 	}
 	ResponseSuccessWithMsg(c, "更新成功", nil)
@@ -223,6 +240,7 @@ func UserInfosUpdateHandler(c *gin.Context) {
 func UserSignOutHandler(c *gin.Context) {
 	err := logic.SignOut(c.GetString("uid"))
 	if err != nil {
+		zap.L().Error("用户退出失败", zap.Error(err))
 		ResponseError(c, CodeSignOutFailed)
 		return
 	}
@@ -240,18 +258,21 @@ func UserSignOutHandler(c *gin.Context) {
 func UserInfoUpdateAvatarHandler(c *gin.Context) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
+		zap.L().Error("更改头像接口，读取用户上传头像失败", zap.Error(err))
 		// 读取文件失败
 		ResponseError(c, CodeUploadAvatarFailed)
 		return
 	}
 	// 检查图片格式
 	if err = check.CheckPic(fileHeader); err != nil {
+		zap.L().Error("更改头像接口，用户上传图片格式、大小有误", zap.Error(err))
 		ResponseError(c, CodeUploadAvatarFailed)
 		return
 	}
 	file, err := fileHeader.Open()
 	if err != nil {
 		// 打开文件失败
+		zap.L().Error("更改头像接口，打开图片失败", zap.Error(err))
 		ResponseError(c, CodeUploadAvatarFailed)
 		return
 	}
@@ -260,6 +281,7 @@ func UserInfoUpdateAvatarHandler(c *gin.Context) {
 	path, err := oss.UploadPic(file)
 	if err != nil || path == "" {
 		// 上传失败
+		zap.L().Error("更改头像接口，上传图片到阿里云OSS失败", zap.Error(err))
 		ResponseError(c, CodeUploadAvatarFailed)
 		return
 	}
@@ -269,6 +291,7 @@ func UserInfoUpdateAvatarHandler(c *gin.Context) {
 	err = logic.UpdateUserAvatar(idStr, path)
 	if err != nil {
 		// 上传失败
+		zap.L().Error("更改头像接口，上传图片成功，修改用户头像数据失败", zap.Error(err))
 		ResponseError(c, CodeUploadAvatarFailed)
 		return
 	}

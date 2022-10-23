@@ -9,7 +9,6 @@ import (
 	"shop-backend/models/dto"
 	"shop-backend/models/pojo"
 	"shop-backend/models/vo"
-	"shop-backend/utils/check"
 	"shop-backend/utils/gen"
 )
 
@@ -18,7 +17,6 @@ var (
 	ErrorMustRequestCode     = errors.New("请先获取验证码")
 	ErrorRequestCodeFrequent = errors.New("验证码已发送，请注意查收")
 	ErrorWrongVerifyCode     = errors.New("验证码错误")
-	ErrorPassWeak            = errors.New("密码强度太弱啦~")
 	ErrorUserNotExist        = errors.New("用户不存在~")
 	ErrorWrongPass           = errors.New("密码错误")
 	ErrorServeBusy           = errors.New("服务器繁忙")
@@ -47,7 +45,7 @@ func SendVerifyCode(phone string) (code string, err error) {
 }
 
 // SignUp 用户注册逻辑
-func SignUp(u *dto.ParamSignUp) error {
+func SignUp(u *dto.SignUp) error {
 	// 到此，用户手机号格式一定是正确的
 	// 如果用户已经注册
 	if ok := mysql.SelectUserByPhone(u.Phone); ok {
@@ -69,11 +67,6 @@ func SignUp(u *dto.ParamSignUp) error {
 		return ErrorWrongVerifyCode
 	}
 
-	// 校验密码强度
-	if err = check.CheckPass(u.Password); err != nil {
-		return ErrorPassWeak
-	}
-
 	// 生成uid
 	uid := gen.GenSnowflakeId()
 	user := &pojo.UmsUser{
@@ -90,7 +83,7 @@ func SignUp(u *dto.ParamSignUp) error {
 }
 
 // Login 登录逻辑
-func Login(p *dto.ParamLogin) (uid int64, aToken, rToken string, err error) {
+func Login(p *dto.Login) (uid int64, aToken, rToken string, err error) {
 	var ok bool
 	ok = mysql.SelectUserByPhone(p.Phone)
 	if !ok {
@@ -133,11 +126,11 @@ func GetSomeInfo(uid int64) (info *vo.SomeInfo, err error) {
 // GetUserInfos 获取用户详细信息
 // todo 邮箱登录功能未实现
 func GetUserInfos(uid int64) (infos *vo.UserInfos, err error) {
-	return mysql.SelectInofsByUID(uid)
+	return mysql.SelectInfosByUID(uid)
 }
 
 // UpdateInfos 更新用户信息
-func UpdateInfos(infos *dto.ParamInfos) (err error) {
+func UpdateInfos(infos *dto.Infos) (err error) {
 	return mysql.UpdateUserInfosByUID(infos)
 }
 

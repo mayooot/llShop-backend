@@ -8,7 +8,7 @@ machine_id: 1
 user:
   width: 4 # 手机验证码位数
   min_pass_len: 8
-  max_pass_len: 15
+  max_pass_len: 30
 
 log:
   level: "debug"
@@ -35,8 +35,8 @@ redis:
 
 aliyun:
   access_key_id: "#"
-  access_key_secret: "#"
+  access_key_secret: "@"
   oss:
-    endpoint: "#"
-    bucket_name: "llshop-project"
-    user_avatar_prefix: "shop/user/avatar/"
+    endpoint: "@"
+    bucket_name: "@"
+    user_avatar_prefix: "@"

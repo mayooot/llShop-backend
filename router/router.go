@@ -57,7 +57,7 @@ func SetupRouter(mode string) *gin.Engine {
 		pmsGroup.GET("/category/list", controller.ProductCategoryListHandler)
 		// 商品分类的属性列表
 		pmsGroup.GET("/attribute/bycategory/:categoryID", controller.ProductAttributeByCategoryIDHandler)
-		pmsGroup.GET("/search", controller.ProductSearchHandler)
+		pmsGroup.POST("/search", controller.ProductSearchHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

@@ -10,7 +10,7 @@ type UmsUser struct {
 	Email       string    `gorm:"column:email"`
 	Phone       string    `gorm:"column:phone"`
 	Avatar      string    `gorm:"column:avatar"`
-	Gender      int8      `gorm:"column:gender"`
+	Gender      uint8     `gorm:"column:gender"`
 	CreatedTime time.Time `gorm:"column:created_time;autoCreateTime"`
 	UpdatedTime time.Time `gorm:"column:updated_time;autoUpdateTime"`
 }

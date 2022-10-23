@@ -33,6 +33,7 @@ const (
 	CodeFrontEndNeedUseNewToken
 	CodeRequestAllCategoryFailed
 	CodeRequestAllAttributeFailed
+	CodeSearchConditionIsNil
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -67,6 +68,7 @@ var codeMsgMap = map[ResCode]string{
 	CodeFrontEndNeedUseNewToken:     "请重置用户的AccessToken",
 	CodeRequestAllCategoryFailed:    "获取商品分类信息失败",
 	CodeRequestAllAttributeFailed:   "获取商品属性信息失败",
+	CodeSearchConditionIsNil:        "搜索条件为空",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息
