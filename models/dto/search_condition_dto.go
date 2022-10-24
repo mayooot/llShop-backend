@@ -21,10 +21,11 @@ type SearchCondition struct {
 	PageSize string `json:"pageSize"`
 }
 
-// NewCondition 初始化搜索条件，并指定分页默认值
+// NewCondition 初始化搜索条件，并指定分页默认值和排序方式(创建时间排序)
 func NewCondition() *SearchCondition {
 	return &SearchCondition{
 		PageNo:   strconv.Itoa(1),
 		PageSize: strconv.Itoa(20),
+		Sort:     strconv.Itoa(1),
 	}
 }

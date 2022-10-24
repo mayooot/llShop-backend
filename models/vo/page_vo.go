@@ -1,7 +1,7 @@
 package vo
 
 type Pageable interface {
-	[]*Product
+	[]*ProductVO
 }
 type Page[T Pageable] struct {
 	// 起始页

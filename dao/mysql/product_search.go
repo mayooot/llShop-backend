@@ -7,16 +7,17 @@ import (
 	"shop-backend/models/vo"
 	"shop-backend/utils/concatstr"
 	"strconv"
+	"strings"
 )
 
 var MAXRecord = 100
 var ErrorExceedMaxRecord = errors.New("超过单次查询最大记录条数")
 
 // BaseSearchCondition 根据条件查询商品，needLimit：是否要分页查询
-func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.Product, int, error) {
-	data := make([]*vo.Product, 0)
+func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.ProductVO, int, error) {
+	data := make([]*vo.ProductVO, 0)
 	// 绑定db对应的表为pms_sku
-	db := db.Model(&vo.Product{})
+	db := db.Model(&vo.ProductVO{})
 	db.Select("pms_sku.id, title AS name, pms_sku.sale, price AS defaultPrice, pms_spu.default_pic_url AS defaultPicUrl")
 	db.Joins("LEFT JOIN pms_sku_pic ON pms_sku_pic.sku_id = pms_sku.id")
 	db.Joins("LEFT JOIN pms_spu ON pms_sku.spu_id = pms_spu.id")
@@ -24,14 +25,14 @@ func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.
 	db.Joins("LEFT JOIN pms_product_attribute ON pms_product_attribute.id = pms_product_attribute_rel.product_attribute_id")
 	// 每个sku在pms_sku中都有多个规格，is_default取值为0和1，1代表默认规格
 	db.Where("pms_sku.is_default = ?", 1)
-	if condition.Keyword != "" {
+	if strings.TrimSpace(condition.Keyword) != "" {
 		// sku表 搜索关键字不为空
-		db.Where("title like ?", concatstr.ConcatString("%", condition.Keyword, "%"))
+		db.Where("title like ?", concatstr.ConcatString("%", strings.TrimSpace(condition.Keyword), "%"))
 	}
 
-	if condition.BrandId != "" {
+	if strings.TrimSpace(condition.BrandId) != "" {
 		// spu表 品牌ID不为空
-		brandId, err := strconv.ParseInt(condition.BrandId, 10, 64)
+		brandId, err := strconv.ParseInt(strings.TrimSpace(condition.BrandId), 10, 64)
 		if err != nil {
 			zap.L().Error("BrandId转换为整型失败", zap.Error(err))
 			return nil, 0, err
@@ -39,9 +40,9 @@ func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.
 		db.Where("brand_id = ?", brandId)
 	}
 
-	if condition.ProductCategoryId != "" {
+	if strings.TrimSpace(condition.ProductCategoryId) != "" {
 		// spu表 商品二级分类ID不为空
-		productCategoryId, err := strconv.ParseInt(condition.ProductCategoryId, 10, 64)
+		productCategoryId, err := strconv.ParseInt(strings.TrimSpace(condition.ProductCategoryId), 10, 64)
 		if err != nil {
 			zap.L().Error("ProductCategoryId转换为整型失败", zap.Error(err))
 			return nil, 0, err
@@ -54,20 +55,18 @@ func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.
 		db.Where("pms_product_attribute_rel.product_attribute_id IN ? ", condition.ProductAttributeIds)
 	}
 
-	if condition.Sort != "" {
-		// 排序ID不为空
-		sort, err := strconv.ParseUint(condition.Sort, 10, 8)
-		if err != nil {
-			zap.L().Error("sort转换为整型失败", zap.Error(err))
-			return nil, 0, err
-		}
-		if sort == 1 {
-			// 按照创建时间排序
-			db.Order("pms_product_attribute.created_time desc")
-		} else if sort == 2 {
-			// 按照销量排序
-			db.Order("pms_spu.sale desc")
-		}
+	// 排序ID不为空
+	sort, err := strconv.ParseUint(condition.Sort, 10, 8)
+	if err != nil {
+		zap.L().Error("sort转换为整型失败", zap.Error(err))
+		return nil, 0, err
+	}
+	if sort == 1 {
+		// 按照创建时间排序
+		db.Order("pms_product_attribute.created_time desc")
+	} else if sort == 2 {
+		// 按照销量排序
+		db.Order("pms_spu.sale desc")
 	}
 
 	if needLimit {
@@ -87,7 +86,7 @@ func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.
 			return nil, 0, err
 		}
 		// 分页
-		db.Limit(pageSize).Offset(pageNo)
+		db.Limit(pageSize).Offset((pageNo - 1) * pageSize)
 	}
 
 	// 分组去重

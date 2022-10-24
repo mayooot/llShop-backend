@@ -9,7 +9,7 @@ import (
 
 // ProductAttributeByCategoryIDHandler 通过二级分类ID获取商品属性
 // @Summary 使用商品二级分类ID获取商品属性
-// @Description 前端以param的形式传递商品二级分类ID，后端返回该商品的所有属性
+// @Description 前端以path的形式传递商品二级分类ID，后端返回该商品的所有属性
 // @Tags 商品相关接口
 // @Produce  json
 // @Param categoryID path string true "商品二级分类ID"

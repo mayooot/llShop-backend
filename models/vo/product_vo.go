@@ -1,9 +1,9 @@
 package vo
 
-// Product 商品信息
-type Product struct {
+// ProductVO 商品信息
+type ProductVO struct {
 	// 主键ID
-	ID int64 `json:"id" gorm:"column:id"`
+	ID int64 `json:"id,string" gorm:"column:id"`
 	// 商品销量
 	Sale int `json:"sale" gorm:"column:sale"`
 	// 商品默认价格
@@ -14,6 +14,6 @@ type Product struct {
 	DefaultPicUrl string `json:"defaultPicUrl" gorm:"column:defaultPicUrl"`
 }
 
-func (Product) TableName() string {
+func (ProductVO) TableName() string {
 	return "pms_sku"
 }

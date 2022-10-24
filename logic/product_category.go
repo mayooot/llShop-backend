@@ -6,7 +6,7 @@ import (
 )
 
 // GetAllCategory 获取所有商品分类信息
-func GetAllCategory() ([]vo.FirstProductCategory, error) {
+func GetAllCategory() ([]vo.FirstProductCategoryVO, error) {
 	// 获取所有商品分类信息
 	categories, err := mysql.SelectAllCategory()
 	if err != nil {
@@ -14,12 +14,12 @@ func GetAllCategory() ([]vo.FirstProductCategory, error) {
 	}
 
 	// 返回的结果切片
-	var result = make([]vo.FirstProductCategory, 0)
+	var result = make([]vo.FirstProductCategoryVO, 0)
 	for _, category := range categories {
 		// 遍历所有商品信息
 		if category.ParentID == 0 {
 			// 如果父级分类ID为0,说明为一级分类
-			firstCategory := vo.FirstProductCategory{
+			firstCategory := vo.FirstProductCategoryVO{
 				ID:         category.ID,
 				Name:       category.Name,
 				Level:      category.Level,
@@ -29,7 +29,7 @@ func GetAllCategory() ([]vo.FirstProductCategory, error) {
 			// 筛选出从属该一级分类的二级分类信息
 			for _, reCategory := range categories {
 				if reCategory.ParentID == category.ID {
-					firstCategory.SecProductCategoryList = append(firstCategory.SecProductCategoryList, &vo.SecondProductCategory{
+					firstCategory.SecProductCategoryList = append(firstCategory.SecProductCategoryList, &vo.SecondProductCategoryVO{
 						SecID:         reCategory.ID,
 						SecName:       reCategory.Name,
 						SecLevel:      reCategory.Level,

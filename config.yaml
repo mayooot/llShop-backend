@@ -38,5 +38,5 @@ aliyun:
   access_key_secret: "#"
   oss:
     endpoint: "#"
-    bucket_name: "#"
-    user_avatar_prefix: "#"
+    bucket_name: "llshop-project"
+    user_avatar_prefix: "shop/user/avatar/"

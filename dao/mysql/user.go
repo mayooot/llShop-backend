@@ -66,7 +66,7 @@ func SelectUserByPhoneAndPass(u *pojo.UmsUser) (int64, bool) {
 }
 
 // SelectSomeInfoByUID 获取用户购物车数量、用户头像、用户名称
-func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
+func SelectSomeInfoByUID(uid int64) (*vo.SomeInfoVO, error) {
 	var user = new(pojo.UmsUser)
 	result := db.Where("user_id", uid).First(user)
 	if result.Error != nil {
@@ -74,7 +74,7 @@ func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
 		return nil, result.Error
 	}
 	// 封装SomeInfo对象
-	info := &vo.SomeInfo{
+	info := &vo.SomeInfoVO{
 		Avatar:   user.Avatar,
 		Username: user.Username,
 		// todo 联查用户购物车表
@@ -84,7 +84,7 @@ func SelectSomeInfoByUID(uid int64) (*vo.SomeInfo, error) {
 }
 
 // SelectInfosByUID 查询用户详细信息
-func SelectInfosByUID(uid int64) (*vo.UserInfos, error) {
+func SelectInfosByUID(uid int64) (*vo.UserInfosVO, error) {
 	var user = new(pojo.UmsUser)
 	result := db.Where("user_id", uid).First(user)
 	if result.Error != nil {
@@ -92,7 +92,7 @@ func SelectInfosByUID(uid int64) (*vo.UserInfos, error) {
 		return nil, result.Error
 	}
 	// 封装UserInfos对象
-	infos := &vo.UserInfos{
+	infos := &vo.UserInfosVO{
 		Id:          user.ID,
 		Username:    user.Username,
 		Phone:       user.Phone,

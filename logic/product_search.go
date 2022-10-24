@@ -9,7 +9,7 @@ import (
 )
 
 // Search 多条件搜索业务
-func Search(condition *dto.SearchCondition) (*vo.Page[[]*vo.Product], error) {
+func Search(condition *dto.SearchCondition) (*vo.Page[[]*vo.ProductVO], error) {
 	// 获取符合条件的sku集合
 	products, _, err := mysql.BaseSearchCondition(condition, true)
 	if err != nil {
@@ -22,7 +22,7 @@ func Search(condition *dto.SearchCondition) (*vo.Page[[]*vo.Product], error) {
 		zap.L().Error("mysql层BaseSearchCondition(不分页) 查询失败", zap.Error(err))
 		return nil, err
 	}
-	page := &vo.Page[[]*vo.Product]{
+	page := &vo.Page[[]*vo.ProductVO]{
 		PageNo:    condition.PageNo,
 		PageSize:  condition.PageSize,
 		TotalPage: strconv.Itoa(totalPage),

@@ -118,14 +118,14 @@ func Login(p *dto.Login) (uid int64, aToken, rToken string, err error) {
 }
 
 // GetSomeInfo 返回简略信息
-func GetSomeInfo(uid int64) (info *vo.SomeInfo, err error) {
+func GetSomeInfo(uid int64) (info *vo.SomeInfoVO, err error) {
 	info, err = mysql.SelectSomeInfoByUID(uid)
 	return
 }
 
 // GetUserInfos 获取用户详细信息
 // todo 邮箱登录功能未实现
-func GetUserInfos(uid int64) (infos *vo.UserInfos, err error) {
+func GetUserInfos(uid int64) (infos *vo.UserInfosVO, err error) {
 	return mysql.SelectInfosByUID(uid)
 }
 
