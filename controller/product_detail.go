@@ -12,17 +12,34 @@ import (
 // @Description 前端以path的形式传递spuID，后端返回该商品详情信息
 // @Tags 商品相关接口
 // @Produce  json
-// @Param spuID path string true "spuID"
-// @Router /pms/product/detail/{spuID} [get]
+// @Param skuID path string true "skuID:1000002"
+// @Router /pms/product/detail/{skuID} [get]
 func ProductDetailHandler(c *gin.Context) {
-	spuIDStr := c.Param("spuID")
-	spuID, err := strconv.ParseInt(spuIDStr, 10, 64)
+	skuIDStr := c.Param("skuID")
+	skuID, err := strconv.ParseInt(skuIDStr, 10, 64)
 	if err != nil {
-		zap.L().Error("商品详情接口，spuID不能转换为int64类型", zap.String("spuIDStr", spuIDStr))
+		zap.L().Error("商品详情接口，skuIDStr不能转换为int64类型", zap.String("skuIDStr", skuIDStr))
 		ResponseError(c, CodeServeBusy)
 		return
 	}
-	data, err := logic.GetProductDetail(spuID)
+	data, err := logic.GetProductDetail(skuID)
+	if err != nil {
+		zap.L().Error("商品详情接口，获取商品详情信息失败", zap.Error(err))
+		ResponseError(c, CodeServeBusy)
+		return
+	}
+	ResponseSuccess(c, data)
+}
+
+func ProductDetailForTestHandler(c *gin.Context) {
+	skuIDStr := c.Param("skuID")
+	skuID, err := strconv.ParseInt(skuIDStr, 10, 64)
+	if err != nil {
+		zap.L().Error("商品详情接口，skuIDStr不能转换为int64类型", zap.String("skuIDStr", skuIDStr))
+		ResponseError(c, CodeServeBusy)
+		return
+	}
+	data, err := logic.GetProductDetailWithConcurrent(skuID)
 	if err != nil {
 		zap.L().Error("商品详情接口，获取商品详情信息失败", zap.Error(err))
 		ResponseError(c, CodeServeBusy)

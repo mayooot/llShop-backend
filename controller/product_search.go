@@ -17,7 +17,7 @@ import (
 // @Router /pms/product/search [post]
 func ProductSearchHandler(c *gin.Context) {
 	condition := dto.NewCondition()
-	nilCondition := new(dto.SearchCondition)
+	nilCondition := dto.NewCondition()
 	err := c.ShouldBindJSON(condition)
 	if err != nil {
 		zap.L().Error("商品搜索接口，前端传递的条件有误", zap.Error(err))
