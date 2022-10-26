@@ -15,6 +15,7 @@ import (
 	"time"
 )
 
+// Init 初始化zap日志
 func Init(cfg *settings.LogConfig, mode string) (err error) {
 	writeSyncer := getLogWriter(
 		cfg.Filename,
