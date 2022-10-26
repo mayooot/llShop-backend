@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Cors 跨域中间件
 func Cors() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := c.Request.Method
