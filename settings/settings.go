@@ -21,6 +21,7 @@ type AppConfig struct {
 	*RedisConfig `mapstructure:"redis"`
 	*UserConfig  `mapstructure:"user"`
 	*Aliyun      `mapstructure:"aliyun"`
+	*RabbitMQ    `mapstructure:"rabbitmq"`
 }
 
 type LogConfig struct {
@@ -52,6 +53,13 @@ type UserConfig struct {
 	Width      int `mapstructure:"width"`
 	MinPassLen int `mapstructure:"min_pass_len"`
 	MaxPassLen int `mapstructure:"max_pass_len"`
+}
+
+type RabbitMQ struct {
+	Port     int    `mapstructure:"port"`
+	Host     string `mapstructure:"host"`
+	User     string `mapstructure:"root"`
+	Password string `mapstructure:"password"`
 }
 
 type Aliyun struct {

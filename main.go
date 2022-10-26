@@ -14,8 +14,9 @@ import (
 	"shop-backend/router"
 	"shop-backend/settings"
 	"shop-backend/utils/gen"
+	"shop-backend/utils/mq"
+	"shop-backend/utils/mq/sms"
 	"shop-backend/utils/oss"
-	"shop-backend/utils/sms"
 	"syscall"
 	"time"
 )
@@ -71,6 +72,12 @@ func main() {
 	// 初始化阿里云SMS
 	if err := sms.Init(settings.Conf.Aliyun); err != nil {
 		fmt.Printf("init Aliyun SMS failed, err:%v\n", err)
+		return
+	}
+
+	// 初始化RabbitMQ
+	if err := mq.Init(settings.Conf.RabbitMQ); err != nil {
+		fmt.Printf("init RabbitMQ failed, err:%v\n", err)
 		return
 	}
 

@@ -10,7 +10,7 @@ import (
 	"shop-backend/models/pojo"
 	"shop-backend/models/vo"
 	"shop-backend/utils/gen"
-	"shop-backend/utils/sms"
+	"shop-backend/utils/mq/sms"
 )
 
 var (
