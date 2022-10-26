@@ -34,7 +34,6 @@ func GetVerifyCode(phone string) (code string, err error) {
 		if err == redis.Nil {
 			err = nil
 		}
-		zap.L().Error("rdb.Get(key).Result() failed", zap.Error(err))
 		return
 	}
 	return

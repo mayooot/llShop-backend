@@ -61,7 +61,6 @@ func SetupRouter(mode string) *gin.Engine {
 		pmsGroup.POST("/search", controller.ProductSearchHandler)
 		// 商品详情接口
 		pmsGroup.GET("/detail/:skuID", controller.ProductDetailHandler)
-		pmsGroup.GET("/detail/test/:skuID", controller.ProductDetailForTestHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

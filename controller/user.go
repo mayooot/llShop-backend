@@ -35,7 +35,6 @@ func SendVerifyCodeHandler(c *gin.Context) {
 	}
 	// 发送验证码
 	code, err := logic.SendVerifyCode(phone)
-	zap.L().Info("Send verification code.", zap.String("code", code))
 	if err != nil {
 		if errors.Is(err, logic.ErrorRequestCodeFrequent) {
 			// 用户频繁请求验证码
@@ -49,6 +48,7 @@ func SendVerifyCodeHandler(c *gin.Context) {
 		return
 	}
 	zap.L().Info("发送验证码成功", zap.String("code", code))
+	// todo 上线后，不应该返回用户验证码
 	ResponseSuccessWithMsg(c, "发送成功，验证码五分钟内有效", gin.H{
 		"code": code,
 	})

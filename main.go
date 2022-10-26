@@ -15,6 +15,7 @@ import (
 	"shop-backend/settings"
 	"shop-backend/utils/gen"
 	"shop-backend/utils/oss"
+	"shop-backend/utils/sms"
 	"syscall"
 	"time"
 )
@@ -24,7 +25,7 @@ import (
 // @description llShop后端接口API
 // @license.name Apache 2.0
 // @termsOfService https://github.com/mayooot/llShop-backend
-// @host 172.20.10.4:9090
+// @host 172.20.10.18:9090
 // @BasePath /api
 func main() {
 	// 加载配置
@@ -64,6 +65,12 @@ func main() {
 	// 初始化阿里云OSS
 	if err := oss.Init(settings.Conf.Aliyun); err != nil {
 		fmt.Printf("init Aliyun OSS failed, err:%v\n", err)
+		return
+	}
+
+	// 初始化阿里云SMS
+	if err := sms.Init(settings.Conf.Aliyun); err != nil {
+		fmt.Printf("init Aliyun SMS failed, err:%v\n", err)
 		return
 	}
 

@@ -55,9 +55,11 @@ type UserConfig struct {
 }
 
 type Aliyun struct {
-	AccessKeyId     string `mapstructure:"access_key_id"`
-	AccessKeySecret string `mapstructure:"access_key_secret"`
-	*OSSConfig      `mapstructure:"oss"`
+	AccessKeyId      string `mapstructure:"access_key_id"`
+	AccessKeySecret  string `mapstructure:"access_key_secret"`
+	AccessKeyId2     string `mapstructure:"access_key_id2"`
+	AccessKeySecret2 string `mapstructure:"access_key_secret2"`
+	*OSSConfig       `mapstructure:"oss"`
 }
 
 type OSSConfig struct {

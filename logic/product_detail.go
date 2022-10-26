@@ -8,9 +8,15 @@ import (
 	"time"
 )
 
+// 存放协程函数信息的通道
+var errorChannel = make(chan error, 2)
+
 // GetCategories 获取sku分类信息
 func GetCategories(revChan chan<- []*vo.CategoryVO, cid1, cid2 int64) {
-	categories, _ := mysql.SelectSpuCategoryByCID(cid1, cid2)
+	categories, err := mysql.SelectSpuCategoryByCID(cid1, cid2)
+	if err != nil {
+		errorChannel <- err
+	}
 	// 封装categoriesVO
 	categoriesVO := make([]*vo.CategoryVO, 0)
 	for _, cate := range categories {
@@ -28,7 +34,10 @@ func GetCategories(revChan chan<- []*vo.CategoryVO, cid1, cid2 int64) {
 // GetSkuList 获取spu下属的sku集合
 func GetSkuList(revChan chan<- []*vo.SkuVO, spuID int64) {
 	// 获取skuList
-	skuList, _ := mysql.SelectSkuListBySpuID(spuID)
+	skuList, err := mysql.SelectSkuListBySpuID(spuID)
+	if err != nil {
+		errorChannel <- err
+	}
 	// 封装skuListVO
 	skuListVO := make([]*vo.SkuVO, 0)
 	for _, sku := range skuList {
@@ -63,10 +72,13 @@ func GetSkuList(revChan chan<- []*vo.SkuVO, spuID int64) {
 
 // GetProductDetailWithConcurrent 多协程获取商品详情
 func GetProductDetailWithConcurrent(skuID int64) (*vo.ProductDetailVO, error) {
-	start := time.Now()
+	// start := time.Now()
 	detail := new(vo.ProductDetailVO)
 	// 获取spu
-	spu, _ := mysql.SelectSpuBySkuID(skuID)
+	spu, err := mysql.SelectSpuBySkuID(skuID)
+	if err != nil {
+		return nil, err
+	}
 	// 封装spuVO
 	spuVO := &vo.SpuVO{
 		ID:                   spu.ID,
@@ -88,9 +100,14 @@ func GetProductDetailWithConcurrent(skuID int64) (*vo.ProductDetailVO, error) {
 	// case2：如果协程函数已经执行完，那么直接从通道中获取数据，完成detail的赋值操作
 	detail.Categories = <-revChan1
 	detail.SkuList = <-revChan2
-
-	cost := time.Since(start)
-	zap.L().Info(" GetProductDetailWithConcurrent 商品详情接口耗时:", zap.Duration("cost", cost))
+	// 处理异常
+	if len(errorChannel) > 0 {
+		err := <-errorChannel
+		zap.L().Error("多协程获取商品详情失败", zap.Error(err))
+		return nil, err
+	}
+	// cost := time.Since(start)
+	// zap.L().Info(" GetProductDetailWithConcurrent 商品详情接口耗时:", zap.Duration("cost", cost))
 	return detail, nil
 }
 

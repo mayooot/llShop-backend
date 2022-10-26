@@ -14,7 +14,7 @@ var bucket *oss.Bucket
 var userAvatarPrefix string
 var commonPrefix = "https://llshop-project.oss-cn-zhangjiakou.aliyuncs.com/"
 
-// Init 初始化阿里云OSS
+// Init 初始化阿里云OSS服务
 func Init(cfg *settings.Aliyun) error {
 	client, err := oss.New(
 		cfg.Endpoint,

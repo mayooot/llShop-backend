@@ -22,23 +22,7 @@ func ProductDetailHandler(c *gin.Context) {
 		ResponseError(c, CodeServeBusy)
 		return
 	}
-	data, err := logic.GetProductDetail(skuID)
-	if err != nil {
-		zap.L().Error("商品详情接口，获取商品详情信息失败", zap.Error(err))
-		ResponseError(c, CodeServeBusy)
-		return
-	}
-	ResponseSuccess(c, data)
-}
-
-func ProductDetailForTestHandler(c *gin.Context) {
-	skuIDStr := c.Param("skuID")
-	skuID, err := strconv.ParseInt(skuIDStr, 10, 64)
-	if err != nil {
-		zap.L().Error("商品详情接口，skuIDStr不能转换为int64类型", zap.String("skuIDStr", skuIDStr))
-		ResponseError(c, CodeServeBusy)
-		return
-	}
+	// 多协程获取商品详情信息
 	data, err := logic.GetProductDetailWithConcurrent(skuID)
 	if err != nil {
 		zap.L().Error("商品详情接口，获取商品详情信息失败", zap.Error(err))
