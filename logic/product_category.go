@@ -1,12 +1,23 @@
 package logic
 
 import (
+	"go.uber.org/zap"
 	"shop-backend/dao/mysql"
+	"shop-backend/dao/redis"
 	"shop-backend/models/vo"
 )
 
 // GetAllCategory 获取所有商品分类信息
 func GetAllCategory() ([]vo.FirstProductCategoryVO, error) {
+	// 先从缓存中获取商品分类信息
+	data, exist := redis.GetCategoryList()
+	if exist {
+		zap.L().Info("使用商品分类信息缓存成功")
+		// 如果商品分类信息存在，直接返回
+		return data, nil
+	} // 缓存不存在，从数据库中查询，并放入缓存
+	zap.L().Info("使用商品分类信息缓存失败，查询数据库")
+
 	// 获取所有商品分类信息
 	categories, err := mysql.SelectAllCategory()
 	if err != nil {
@@ -42,5 +53,8 @@ func GetAllCategory() ([]vo.FirstProductCategoryVO, error) {
 			result = append(result, firstCategory)
 		}
 	}
+
+	// 将商品分类信息缓存进Redis
+	redis.SetCategoryList(result)
 	return result, nil
 }
