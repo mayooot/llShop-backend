@@ -14,8 +14,8 @@ const (
 
 var smsChannel *amqp.Channel
 
-// SmsConfig 初始化SMS使用到的消息队列配置
-func SmsConfig() (err error) {
+// RabbitMQConfig 初始化SMS使用到的消息队列配置
+func RabbitMQConfig() (err error) {
 	// 创建一个消息队列通道
 	smsChannel, err = mq.Conn.Channel()
 	if err != nil {
