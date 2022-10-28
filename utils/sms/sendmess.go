@@ -24,8 +24,8 @@ func Init(cfg *settings.Aliyun) (err error) {
 	return err
 }
 
-// SendMess 发送短信
-func SendMess(phone, code string) (err error) {
+// SendSms 发送短信
+func SendSms(phone, code string) (err error) {
 	sendSmsRequest := &dysmsapi20170525.SendSmsRequest{
 		SignName:     tea.String("阿里云短信测试"),
 		TemplateCode: tea.String("SMS_154950909"),

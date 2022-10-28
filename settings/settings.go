@@ -58,7 +58,7 @@ type UserConfig struct {
 type RabbitMQ struct {
 	Port     int    `mapstructure:"port"`
 	Host     string `mapstructure:"host"`
-	User     string `mapstructure:"root"`
+	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
 }
 

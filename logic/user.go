@@ -9,8 +9,8 @@ import (
 	"shop-backend/models/dto"
 	"shop-backend/models/pojo"
 	"shop-backend/models/vo"
+	"shop-backend/rabbitmq"
 	"shop-backend/utils/gen"
-	"shop-backend/utils/mq/sms"
 )
 
 var (
@@ -32,20 +32,21 @@ func SendVerifyCode(phone string) (code string, err error) {
 		zap.L().Error("用户频繁获取手机验证码", zap.String("phone", phone))
 		return
 	}
+	// 生成验证码
 	if code, err = gen.GenVerifyCode(); err != nil {
-		// 生成验证码失败
 		zap.L().Error("生成手机验证码失败", zap.Error(err))
 		return
 	}
-	// 调用阿里云SMS服务，发送验证码
-	err = sms.SendMess(phone, code)
-	if err != nil {
-		zap.L().Error("调用阿里云SMS服务，发送验证码失败", zap.Error(err))
-		return "", err
-	}
+	// 缓存到Redis，并设置五分钟的存活时间
 	if err = redis.SetVerifyCode(phone, code); err != nil {
-		// 缓存到Redis失败
 		zap.L().Error("手机验证码缓存到Redis失败", zap.Error(err))
+		return
+	}
+
+	// 将消息发送到RabbitMQ中，异步发送验证码
+	err = rabbitmq.SendSms(phone, code)
+	if err != nil {
+		zap.L().Error("发送验证码信息发送到RabbitMQ失败", zap.Error(err))
 		return
 	}
 	return

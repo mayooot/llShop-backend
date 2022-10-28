@@ -11,12 +11,12 @@ import (
 	"shop-backend/dao/mysql"
 	"shop-backend/dao/redis"
 	"shop-backend/logger"
+	"shop-backend/rabbitmq"
 	"shop-backend/router"
 	"shop-backend/settings"
 	"shop-backend/utils/gen"
-	"shop-backend/utils/mq"
-	"shop-backend/utils/mq/sms"
 	"shop-backend/utils/oss"
+	"shop-backend/utils/sms"
 	"syscall"
 	"time"
 )
@@ -26,7 +26,7 @@ import (
 // @description llShop后端接口API
 // @license.name Apache 2.0
 // @termsOfService https://github.com/mayooot/llShop-backend
-// @host 172.20.10.18:9090
+// @host  43.143.204.40:9090
 // @BasePath /api
 func main() {
 	// 加载配置
@@ -76,10 +76,7 @@ func main() {
 	}
 
 	// 初始化RabbitMQ
-	if err := mq.Init(settings.Conf.RabbitMQ); err != nil {
-		fmt.Printf("init RabbitMQ failed, err:%v\n", err)
-		return
-	}
+	go rabbitmq.Init(settings.Conf.RabbitMQ)
 
 	// 注册路由
 	r := router.SetupRouter(settings.Conf.Mode)
@@ -89,7 +86,6 @@ func main() {
 		Addr:    fmt.Sprintf(":%d", settings.Conf.Port),
 		Handler: r,
 	}
-
 	go func() {
 		// 开启一个goroutine启动服务
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
