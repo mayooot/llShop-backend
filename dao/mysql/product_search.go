@@ -18,7 +18,7 @@ func BaseSearchCondition(condition *dto.SearchCondition, needLimit bool) ([]*vo.
 	data := make([]*vo.ProductVO, 0)
 	// 绑定db对应的表为pms_sku
 	db := db.Model(&vo.ProductVO{})
-	db.Select("pms_sku.id, title AS name, pms_sku.sale, price AS defaultPrice, pms_spu.default_pic_url AS defaultPicUrl")
+	db.Select("pms_sku.id, pms_sku.title AS name, pms_sku.sale, pms_sku.price AS defaultPrice, pms_spu.default_pic_url AS defaultPicUrl")
 	db.Joins("LEFT JOIN pms_sku_pic ON pms_sku_pic.sku_id = pms_sku.id")
 	db.Joins("LEFT JOIN pms_spu ON pms_sku.spu_id = pms_spu.id")
 	db.Joins("LEFT JOIN pms_product_attribute_rel ON pms_product_attribute_rel.spu_id = pms_spu.id")

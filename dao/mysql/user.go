@@ -73,12 +73,21 @@ func SelectSomeInfoByUID(uid int64) (*vo.SomeInfoVO, error) {
 		zap.L().Error("获取用户购物车数量、用户头像、用户名称失败", zap.Error(result.Error))
 		return nil, result.Error
 	}
+
+	// 获取用户购物车数量
+	var count int
+	cartList, err := SelectCartList(uid)
+	if err != nil {
+		count = 0
+	} else {
+		count = len(cartList)
+	}
+
 	// 封装SomeInfo对象
 	info := &vo.SomeInfoVO{
 		Avatar:   user.Avatar,
 		Username: user.Username,
-		// todo 联查用户购物车表
-		CartNum: 0,
+		CartNum:  count,
 	}
 	return info, result.Error
 }

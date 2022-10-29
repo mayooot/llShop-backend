@@ -63,6 +63,19 @@ func SetupRouter(mode string) *gin.Engine {
 		pmsGroup.GET("/detail/:skuID", controller.ProductDetailHandler)
 	}
 
+	// 购物车路由组，需要鉴权
+	cartGroup := commonGroup.Group("/oms/cart").Use(middleware.JWTAuthMiddleware())
+	{
+		// 获取用户购物车列表
+		cartGroup.GET("/list", controller.OrderCartListHandler)
+		// 添加商品到购物车
+		cartGroup.POST("/add", controller.OrderAddCartHandler)
+		// 从购物车中移除商品
+		cartGroup.DELETE("/remove/:skuID", controller.OrderRemoveCartHandler)
+		// 获取用户购物车中商品的数量
+		cartGroup.GET("/list/count", controller.OrderCartListCountHandler)
+	}
+
 	r.NoRoute(func(c *gin.Context) {
 		controller.ResponseErrorWithMsg(c, http.StatusBadRequest, gin.H{"msg": "404"})
 	})

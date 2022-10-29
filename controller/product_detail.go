@@ -19,7 +19,7 @@ func ProductDetailHandler(c *gin.Context) {
 	skuID, err := strconv.ParseInt(skuIDStr, 10, 64)
 	if err != nil {
 		zap.L().Error("商品详情接口，skuIDStr不能转换为int64类型", zap.String("skuIDStr", skuIDStr))
-		ResponseError(c, CodeServeBusy)
+		ResponseError(c, CodeInvalidParams)
 		return
 	}
 	// 多协程获取商品详情信息
