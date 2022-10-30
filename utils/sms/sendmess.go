@@ -12,7 +12,7 @@ import (
 var client *dysmsapi20170525.Client
 
 // Init 初始化阿里云SMS服务
-func Init(cfg *settings.Aliyun) (err error) {
+func Init(cfg *settings.AliyunConfig) (err error) {
 	config := &openapi.Config{
 		AccessKeyId:     &cfg.AccessKeyId2,
 		AccessKeySecret: &cfg.AccessKeySecret2,

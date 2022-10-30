@@ -10,18 +10,19 @@ import (
 var Conf = new(AppConfig)
 
 type AppConfig struct {
-	Name         string `mapstructure:"name"`
-	Mode         string `mapstructure:"mode"`
-	Port         int    `mapstructure:"port"`
-	Version      string `mapstructure:"version"`
-	StartTime    string `mapstructure:"start_time"`
-	MachineId    int64  `mapstructure:"machine_id"`
-	*LogConfig   `mapstructure:"log"`
-	*MySQLConfig `mapstructure:"mysql"`
-	*RedisConfig `mapstructure:"redis"`
-	*UserConfig  `mapstructure:"user"`
-	*Aliyun      `mapstructure:"aliyun"`
-	*RabbitMQ    `mapstructure:"rabbitmq"`
+	Name            string `mapstructure:"name"`
+	Mode            string `mapstructure:"mode"`
+	Port            int    `mapstructure:"port"`
+	Version         string `mapstructure:"version"`
+	StartTime       string `mapstructure:"start_time"`
+	MachineId       int64  `mapstructure:"machine_id"`
+	*LogConfig      `mapstructure:"log"`
+	*MySQLConfig    `mapstructure:"mysql"`
+	*RedisConfig    `mapstructure:"redis"`
+	*UserConfig     `mapstructure:"user"`
+	*AliyunConfig   `mapstructure:"aliyun"`
+	*RabbitMQConfig `mapstructure:"rabbitmq"`
+	*CanalConfig    `mapstructure:"canal"`
 }
 
 type LogConfig struct {
@@ -31,6 +32,7 @@ type LogConfig struct {
 	MaxAge     int    `mapstructure:"max_age"`
 	MaxBackups int    `mapstructure:"max_backups"`
 }
+
 type MySQLConfig struct {
 	Host         string `mapstructure:"host"`
 	Port         int    `mapstructure:"port"`
@@ -55,14 +57,22 @@ type UserConfig struct {
 	MaxPassLen int `mapstructure:"max_pass_len"`
 }
 
-type RabbitMQ struct {
+type RabbitMQConfig struct {
 	Port     int    `mapstructure:"port"`
 	Host     string `mapstructure:"host"`
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
 }
 
-type Aliyun struct {
+type CanalConfig struct {
+	Port        int    `mapstructure:"port"`
+	Host        string `mapstructure:"host"`
+	User        string `mapstructure:"user"`
+	Password    string `mapstructure:"password"`
+	Destination string `mapstructure:"destination"`
+}
+
+type AliyunConfig struct {
 	AccessKeyId      string `mapstructure:"access_key_id"`
 	AccessKeySecret  string `mapstructure:"access_key_secret"`
 	AccessKeyId2     string `mapstructure:"access_key_id2"`

@@ -15,7 +15,7 @@ var userAvatarPrefix string
 var commonPrefix = "https://llshop-project.oss-cn-zhangjiakou.aliyuncs.com/"
 
 // Init 初始化阿里云OSS服务
-func Init(cfg *settings.Aliyun) error {
+func Init(cfg *settings.AliyunConfig) error {
 	client, err := oss.New(
 		cfg.Endpoint,
 		cfg.AccessKeyId,
@@ -23,7 +23,7 @@ func Init(cfg *settings.Aliyun) error {
 	)
 	userAvatarPrefix = cfg.UserAvatarPrefix
 	if err != nil {
-		zap.L().Error("init Aliyun OSS failed", zap.Error(err))
+		zap.L().Error("init AliyunConfig OSS failed", zap.Error(err))
 		return err
 	}
 	bucket, err = client.Bucket(cfg.BucketName)

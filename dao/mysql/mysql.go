@@ -15,7 +15,7 @@ var sqlDB *sql.DB
 
 // Init 初始化gorm和mysql
 func Init(cfg *settings.MySQLConfig) (err error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=true&loc=Local",
 		cfg.User,
 		cfg.Password,
 		cfg.Host,

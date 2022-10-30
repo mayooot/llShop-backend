@@ -7,12 +7,13 @@ import (
 )
 
 // InsertCartProduct 添加一条商品sku信息到用户购物车下
-func InsertCartProduct(userID, skuID int64, count int) error {
+func InsertCartProduct(userID, skuID int64, count int, specification string) error {
 	err := db.Create(&pojo.Cart{
-		UserID:   userID,
-		SkuID:    skuID,
-		Count:    count,
-		Selected: 0, // 代表未被勾选
+		UserID:        userID,
+		SkuID:         skuID,
+		Specification: specification,
+		Count:         count,
+		Selected:      0, // 代表未被勾选
 	}).Error
 	if err != nil {
 		return err
@@ -20,10 +21,10 @@ func InsertCartProduct(userID, skuID int64, count int) error {
 	return nil
 }
 
-// SelectOneCartProductByUIDAndSkuId 根据用户ID和商品skuID查询用户购物车中是否已经有该商品的记录
-func SelectOneCartProductByUIDAndSkuId(userID, skuID int64) (*pojo.Cart, bool) {
+// SelectOneCartProductByUIDAndSkuId 根据用户ID和商品skuID和规格查询用户购物车中是否已经有该商品的记录
+func SelectOneCartProductByUIDAndSkuId(userID, skuID int64, specification string) (*pojo.Cart, bool) {
 	cart := new(pojo.Cart)
-	result := db.Where("user_id = ? and sku_id = ?", userID, skuID).First(cart)
+	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).First(cart)
 	if result.Error != nil || result.RowsAffected == 0 {
 		zap.L().Error("根据用户ID和skuID删除购物车商品记录失败", zap.Error(result.Error), zap.Int64("uid", userID), zap.Int64("skuID", skuID))
 		return nil, false
@@ -42,8 +43,8 @@ func UpdateCartProductByUIDAndSkuId(userID, skuID int64, count int) error {
 }
 
 // DelCartProductBySkuIDAndUID 根据用户ID和skuID删除购物车商品记录
-func DelCartProductBySkuIDAndUID(userID, skuID int64) error {
-	result := db.Where("user_id = ? and sku_id = ?", userID, skuID).Delete(&pojo.Cart{})
+func DelCartProductBySkuIDAndUID(userID, skuID int64, specification string) error {
+	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).Delete(&pojo.Cart{})
 	if result.Error != nil || result.RowsAffected == 0 {
 		zap.L().Error("根据用户ID和skuID删除购物车商品记录失败", zap.Error(result.Error), zap.Int64("uid", userID), zap.Int64("skuID", skuID))
 		return errors.New("根据用户ID和skuID删除购物车商品记录失败")
@@ -52,8 +53,8 @@ func DelCartProductBySkuIDAndUID(userID, skuID int64) error {
 }
 
 // UpdateCartProductSelected 根据用户ID和skuID修改购物车商品勾选状态
-func UpdateCartProductSelected(userID, skuID int64, selected int) error {
-	result := db.Where("user_id = ? and sku_id = ?", userID, skuID).Updates(&pojo.Cart{
+func UpdateCartProductSelected(userID, skuID int64, selected int, specification string) error {
+	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).Updates(&pojo.Cart{
 		Selected: int8(selected),
 	})
 	if result.Error != nil {
@@ -72,9 +73,4 @@ func SelectCartList(userID int64) ([]*pojo.Cart, error) {
 		return nil, result.Error
 	}
 	return cartList, nil
-}
-
-// SelectCartProductBySkuID 获取用于展示的购物车商品信息
-func SelectCartProductBySkuID(skuID int64) {
-	db.Select("pms_sku.title, pms_sku.product_sku_specification, pms_sku.price, pms_spu.default_pic_url, pms_spu.publish_status")
 }
