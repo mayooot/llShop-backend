@@ -1,6 +1,8 @@
 ## llShop-backend
 
-🍨llShop是一个前后端分离的商城项目。主要包括以下模块:
+🍨llShop是一个前后端分离的商城项目。使用Golang作为后端语言。利用多协程处理业务逻辑极大提高系统并发量。集成RabbitMQ并实现了断线重连，手动ACK等。集成Redis利用缓存缩短接口响应时间，并解决缓存穿透、缓存击穿、缓存雪崩等问题。集成Canal尽量保证缓存数据一致性，确保最终一致性。
+
+主要包括以下模块：
 
 * 🧍🏻用户模块
 * 🗒商品信息模块
@@ -16,16 +18,16 @@
 
 🎨第三方库:
 
-* viper: 配置文件的读取，修改时自动加载新的配置
-* zap: 日志记录
-* swaggo: 生成Swagger接口文档
-* validator: 参数校验
-* air: 程序热启动
-* snowflake: 生成分布式唯一ID
-* jwt-go: 前后端身份认证
-* fsnotify: 监听文件或目录，配合viper使用
-* lumberjack: 配置zap，实现日志的滚动记录
-* ratelimit: 令牌桶限流
+* zap：日志记录。
+* air：程序热启动。
+* validator：参数校验。
+* ratelimit：令牌桶限流。
+* jwt-go：前后端身份认证。
+* swaggo：生成Swagger接口文档。
+* snowflake：生成分布式唯一ID。
+* fsnotify：监听文件或目录，配合viper使用。
+* lumberjack：配置zap，实现日志的滚动记录。
+* viper：配置文件的读取，修改时自动加载新的配置。
 
 🎏目录结构:
 
@@ -35,10 +37,11 @@
 │   ├───mysql               MySQL和Gorm初始化
 │   └───redis               Redis初始化
 ├───docs                    Swagger文档
-├───logger                  zap日志库配置
+├───logger                  Zap日志库配置
 ├───logic                   业务逻辑层
 ├───middleware              中间件层
 ├───models                  结构体模型层
+├───rabbitmq                RabbitMQ初始化、使用
 ├───router                  路由管理层
 ├───settings                配置信息层
 ├───utils                   常用工具类层
@@ -65,7 +68,6 @@
 | oms_pay_log                        | 支付记录表           |
 | oms_order_item                     | 订单商品明细表       |
 | oms_order                          | 订单表               |
-| oms_cart_mess                      | 购物车信息表         |
 | oms_cart                           | 购物车表             |
 
 

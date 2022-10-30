@@ -59,6 +59,7 @@ func (mq *RabbitMQ) run() {
 	mq.prepareExchange()
 
 	for _, receiver := range mq.receivers {
+		// 一个RabbitMQ对象可以对应多个消费者，每个消费者的加入都会使得WaitGroup+1
 		mq.wg.Add(1)
 		// 每个接收者单独启动一个goroutine用来初始化queue并接收消息
 		// listen方法完成时会执行mq.wg.Done()
@@ -66,7 +67,7 @@ func (mq *RabbitMQ) run() {
 		go mq.listen(receiver)
 	}
 
-	// 等待
+	// 一直在此等待，除非所有的消费者都意外退出
 	mq.wg.Wait()
 
 	zap.L().Error("所有处理queue的任务都意外退出了")
