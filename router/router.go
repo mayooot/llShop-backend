@@ -71,7 +71,7 @@ func SetupRouter(mode string) *gin.Engine {
 		// 添加商品到购物车
 		cartGroup.POST("/add", controller.OrderCartAddHandler)
 		// 从购物车中移除商品
-		cartGroup.DELETE("/remove/:skuID", controller.OrderCartRemoveHandler)
+		cartGroup.DELETE("/remove", controller.OrderCartRemoveHandler)
 		// 获取用户购物车中商品的数量
 		cartGroup.GET("/list/count", controller.OrderCartListCountHandler)
 		// 修改购物车商品勾选状态

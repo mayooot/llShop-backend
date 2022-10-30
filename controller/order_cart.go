@@ -70,7 +70,7 @@ func OrderCartAddHandler(c *gin.Context) {
 		return
 	}
 
-	if err = logic.AddCartProduct(c.GetInt64("uid"), skuID, count); err != nil {
+	if err = logic.AddCartProduct(c.GetInt64("uid"), skuID, count, cartProduct.Specification); err != nil {
 		zap.L().Error("添加商品到购物车接口，添加商品到购物车失败", zap.Error(err))
 		ResponseError(c, CodeServeBusy)
 		return
@@ -85,18 +85,24 @@ func OrderCartAddHandler(c *gin.Context) {
 // @Tags 购物车相关接口
 // @Produce json
 // @param Authorization header string true "Bearer AToken&RToken"
-// @Param skuID path string true "商品skuID"
-// @Router /oms/cart/remove/{skuID} [delete]
+// @Param CartProductDel body dto.CartProductDel true "删除时购物车商品结构体"
+// @Router /oms/cart/remove [delete]
 func OrderCartRemoveHandler(c *gin.Context) {
-	skuIDStr := c.Param("skuID")
-	skuID, err := strconv.ParseInt(skuIDStr, 10, 64)
-	if err != nil {
-		zap.L().Error("删除购物车商品接口，skuIDStr不能转换为int64类型", zap.String("skuIDStr", skuIDStr))
+	cartDel := new(dto.CartProductDel)
+	if err := c.ShouldBindJSON(cartDel); err != nil {
+		zap.L().Error("删除购物车商品接口，传递参数有误", zap.Error(err))
 		ResponseError(c, CodeInvalidParams)
 		return
 	}
 
-	if err = logic.DelCartProduct(c.GetInt64("uid"), skuID); err != nil {
+	skuID, err := strconv.ParseInt(cartDel.SkuID, 10, 64)
+	if err != nil {
+		zap.L().Error("删除购物车商品接口，skuIDStr不能转换为int64类型", zap.String("skuIDStr", cartDel.Specification))
+		ResponseError(c, CodeInvalidParams)
+		return
+	}
+
+	if err = logic.DelCartProduct(c.GetInt64("uid"), skuID, cartDel.Specification); err != nil {
 		zap.L().Error("删除购物车商品接口，删除商品失败", zap.Int64("skuID", skuID), zap.Error(err))
 		ResponseError(c, CodeDeleteCartProductFailed)
 		return
@@ -133,7 +139,7 @@ func OrderCartUpdateSelectedHandler(c *gin.Context) {
 		ResponseError(c, CodeInvalidParams)
 		return
 	}
-	if err = logic.UpdateCartProductSelected(c.GetInt64("uid"), skuID, selected); err != nil {
+	if err = logic.UpdateCartProductSelected(c.GetInt64("uid"), skuID, selected, status.Specification); err != nil {
 		zap.L().Error("修改购物车商品状态，修改状态", zap.Int64("skuID", skuID), zap.Int("selected", selected), zap.Error(err))
 		ResponseError(c, CodeUpdateCartProductStatusFailed)
 		return

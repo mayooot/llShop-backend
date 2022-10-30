@@ -11,9 +11,12 @@ type CartProductVO struct {
 	WG sync.WaitGroup `json:"-"`
 	// 错误信息，用于多协程中错误的返回，前端不用渲染
 	Err error `json:"-"`
+	// 商品skuID
+	SkuID int64 `json:"skuID,string"`
 	// 商品标题
 	Title string `json:"title"`
-	Count int    `json:"count"`
+	// 数量
+	Count int `json:"count"`
 	// 商品sku规格，json格式
 	ProductSkuSpecification string `json:"productSkuSpecification"`
 	// 商品默认图片URL
