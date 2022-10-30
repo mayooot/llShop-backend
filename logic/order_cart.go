@@ -48,6 +48,11 @@ func DelCartProduct(userID, skuID int64) error {
 	return mysql.DelCartProductBySkuIDAndUID(userID, skuID)
 }
 
+// UpdateCartProductSelected 修改购物车中商品的勾选状态
+func UpdateCartProductSelected(userID, skuID int64, selected int) error {
+	return mysql.UpdateCartProductSelected(userID, skuID, selected)
+}
+
 // GetCarProductListCount  返回用户购物车中的商品数量
 func GetCarProductListCount(userID int64) (int, error) {
 	// 获取用户购物车信息集合

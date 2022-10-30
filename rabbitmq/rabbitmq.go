@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Receiver 观察者模式需要的接口
+// Receiver 观察者模式需要的接口(观察者)
 // 观察者用于接收指定的queue到来的数据
 type Receiver interface {
 	QueueName() string     // 获取接收者需要监听的队列
@@ -17,7 +17,7 @@ type Receiver interface {
 	OnReceive([]byte) bool // 处理收到的消息, 这里需要告知RabbitMQ对象消息是否处理成功
 }
 
-// RabbitMQ 用于管理和维护RabbitMQ的对象
+// RabbitMQ 用于管理和维护RabbitMQ的对象(被观察者)
 type RabbitMQ struct {
 	wg           sync.WaitGroup
 	channel      *amqp.Channel
@@ -26,7 +26,7 @@ type RabbitMQ struct {
 	receivers    []Receiver
 }
 
-// NewSmsMQ New 创建一个新的操作RabbitMQ的对象
+// NewSmsMQ 创建一个用于发送短信业务的新的操作RabbitMQ的对象
 func NewSmsMQ() *RabbitMQ {
 	return &RabbitMQ{
 		exchangeName: SmsExchangeName,
@@ -89,6 +89,7 @@ func (mq *RabbitMQ) Start() {
 }
 
 // RegisterReceiver 注册一个用于接收指定队列指定路由的数据接收者
+// 将若干个观察者聚集到被观察者中，实现类间解耦
 func (mq *RabbitMQ) RegisterReceiver(receiver Receiver) {
 	mq.receivers = append(mq.receivers, receiver)
 }

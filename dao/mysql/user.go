@@ -116,13 +116,26 @@ func SelectInfosByUID(uid int64) (*vo.UserInfosVO, error) {
 // UpdateUserInfosByUID 修改用户个人信息
 func UpdateUserInfosByUID(infos *dto.Infos) error {
 	id, _ := strconv.ParseInt(infos.ID, 10, 64)
-	result := db.Model(&pojo.UmsUser{ID: id}).Updates(pojo.UmsUser{
-		Username: infos.Username,
-		Password: encryptPass(infos.Password),
-		Email:    infos.Email,
-		Phone:    infos.Phone,
-		Gender:   infos.Gender,
-	})
+	var result *gorm.DB
+	if infos.Password == "" {
+		// 如果用户没有传递密码，则不修改密码
+		result = db.Model(&pojo.UmsUser{ID: id}).Updates(pojo.UmsUser{
+			Username: infos.Username,
+			Email:    infos.Email,
+			Phone:    infos.Phone,
+			Gender:   infos.Gender,
+		})
+	} else {
+		// 修改密码
+		result = db.Model(&pojo.UmsUser{ID: id}).Updates(pojo.UmsUser{
+			Username: infos.Username,
+			Password: encryptPass(infos.Password),
+			Email:    infos.Email,
+			Phone:    infos.Phone,
+			Gender:   infos.Gender,
+		})
+	}
+
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) || result.RowsAffected == 0 {
 		// 如果有异常为不存在该记录异常或者影响的行数为0，说明用户不存在
 		zap.L().Error("修改用户信息失败", zap.Error(result.Error))

@@ -217,6 +217,15 @@ func UserInfosUpdateHandler(c *gin.Context) {
 		ResponseError(c, CodeEmailFormatError)
 		return
 	}
+	if infos.Password != "" {
+		// 如果用户需要修改密码，则校验密码强度
+		if err := check.CheckPass(infos.Password); err != nil {
+			// 密码强度太低
+			zap.L().Error("修改个人信息接口，用户密码强度太低")
+			ResponseError(c, CodePassIsWeak)
+			return
+		}
+	}
 
 	err := logic.UpdateInfos(infos)
 	if err != nil {

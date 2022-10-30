@@ -69,11 +69,13 @@ func SetupRouter(mode string) *gin.Engine {
 		// 获取用户购物车列表
 		cartGroup.GET("/list", controller.OrderCartListHandler)
 		// 添加商品到购物车
-		cartGroup.POST("/add", controller.OrderAddCartHandler)
+		cartGroup.POST("/add", controller.OrderCartAddHandler)
 		// 从购物车中移除商品
-		cartGroup.DELETE("/remove/:skuID", controller.OrderRemoveCartHandler)
+		cartGroup.DELETE("/remove/:skuID", controller.OrderCartRemoveHandler)
 		// 获取用户购物车中商品的数量
 		cartGroup.GET("/list/count", controller.OrderCartListCountHandler)
+		// 修改购物车商品勾选状态
+		cartGroup.PUT("/product/status", controller.OrderCartUpdateSelectedHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {
