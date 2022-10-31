@@ -64,19 +64,22 @@ func main() {
 	}
 
 	// 初始化阿里云OSS
-	if err := oss.Init(settings.Conf.Aliyun); err != nil {
-		fmt.Printf("init Aliyun OSS failed, err:%v\n", err)
+	if err := oss.Init(settings.Conf.AliyunConfig); err != nil {
+		fmt.Printf("init AliyunConfig OSS failed, err:%v\n", err)
 		return
 	}
 
 	// 初始化阿里云SMS
-	if err := sms.Init(settings.Conf.Aliyun); err != nil {
-		fmt.Printf("init Aliyun SMS failed, err:%v\n", err)
+	if err := sms.Init(settings.Conf.AliyunConfig); err != nil {
+		fmt.Printf("init AliyunConfig SMS failed, err:%v\n", err)
 		return
 	}
 
 	// 初始化RabbitMQ
-	go rabbitmq.Init(settings.Conf.RabbitMQ)
+	go rabbitmq.Init(settings.Conf.RabbitMQConfig)
+
+	// 初始化Canal
+	// go canal.Init()
 
 	// 注册路由
 	r := router.SetupRouter(settings.Conf.Mode)

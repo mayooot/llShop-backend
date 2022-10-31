@@ -11,7 +11,7 @@ var rabbitmqChannel *amqp.Channel
 var err error
 
 // Init 初始化RabbitMQ
-func Init(cfg *settings.RabbitMQ) {
+func Init(cfg *settings.RabbitMQConfig) {
 	// 构造RabbitMQ连接url
 	url := fmt.Sprintf("amqp://%s:%s@%s:%d/",
 		cfg.User,
@@ -21,7 +21,7 @@ func Init(cfg *settings.RabbitMQ) {
 	// 连接RabbitMQ
 	rabbitmqConn, err = amqp.Dial(url)
 	if err != nil {
-		panic("RabbitMQ 初始化失败: " + err.Error())
+		panic("RabbitMQConfig 初始化失败: " + err.Error())
 	}
 
 	// 初始化channel
