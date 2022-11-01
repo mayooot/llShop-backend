@@ -53,15 +53,16 @@ func DelCartProductBySkuIDAndUID(userID, skuID int64, specification string) erro
 }
 
 // UpdateCartProductSelected 根据用户ID和skuID修改购物车商品勾选状态
-func UpdateCartProductSelected(userID, skuID int64, selected int, specification string) error {
-	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).Updates(&pojo.Cart{
-		Selected: int8(selected),
-	})
+func UpdateCartProductSelected(userID, skuID int64, selected int, specification string) (*pojo.Cart, error) {
+	cart := new(pojo.Cart)
+	cart.Selected = int8(selected)
+
+	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).Updates(cart)
 	if result.Error != nil {
 		zap.L().Error("根据用户ID和skuID修改购物车商品勾选状态失败", zap.Error(result.Error), zap.Int64("uid", userID), zap.Int64("skuID", skuID), zap.Int("selected", selected))
-		return errors.New("根据用户ID和skuID修改购物车商品勾选状态失败")
+		return nil, errors.New("根据用户ID和skuID修改购物车商品勾选状态失败")
 	}
-	return nil
+	return cart, nil
 }
 
 // SelectCartList 获取用户购物车信息集合

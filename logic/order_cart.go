@@ -6,15 +6,15 @@ import (
 	"go.uber.org/zap"
 	"shop-backend/dao/mysql"
 	"shop-backend/dao/redis"
-	"shop-backend/models/pojo"
 	"shop-backend/models/vo"
+	"shop-backend/utils/build"
 	"strings"
-	"time"
 )
 
 // AddCartProduct 添加商品到用户购物车
+// 缓存设计：无论Redis中是否有该商品的缓存，都应该被覆盖。所以每次新增商品时，无需判断缓存是否存在。商品入库后，回写到缓存即可
 func AddCartProduct(userID, skuID int64, count int, specification string) error {
-	// 查询该sku是否存在，是否还是上架状态
+	// 查询该商品sku是否存在，是否还是上架状态
 	sku, err := mysql.SelectSkuBySkuID(skuID)
 	if err != nil || sku.Valid == 0 {
 		zap.L().Error("用户添加到购物车的商品不存在或已下架", zap.Error(err), zap.Int64("skuID", skuID))
@@ -72,31 +72,62 @@ func AddCartProduct(userID, skuID int64, count int, specification string) error 
 		}
 	}
 
-	// 添加到Redis缓存中
-	// 构建pojo.Cart对象
-	product := &pojo.Cart{
-		UserID:        userID,
-		SkuID:         skuID,
-		Specification: specification,
-		Count:         count,
-		Selected:      1,
-		CreatedTime:   time.Now(),
-	}
-	// 创建一个存入购物车商品展示对象的通道，缓存区为1
-	channel := make(chan *vo.CartProductVO, 1)
-	defer close(channel)
-	// 添加到Redis缓存中
-	return redis.AddCartProduct(userID, skuID, createCartProductVO(product, channel))
+	// // 添加到Redis缓存中
+	// // 构建pojo.Cart对象
+	// product := &pojo.Cart{
+	// 	UserID:        userID,
+	// 	SkuID:         skuID,
+	// 	Specification: specification,
+	// 	Count:         count,
+	// 	Selected:      1,
+	// 	CreatedTime:   time.Now(),
+	// }
+	// // 创建一个存入购物车商品展示对象的通道，缓存区为1
+	// channel := make(chan *vo.CartProductVO, 1)
+	// defer close(channel)
+	// // 添加到Redis缓存中
+	// return redis.AddCartProduct(userID, skuID, CreateCartProductVO(product, channel))
+	return nil
 }
 
 // DelCartProduct 删除用户购物车中的某个商品
+// 缓存设计：从数据库中删除该商品后，也应该删除缓存中的商品数据
 func DelCartProduct(userID, skuID int64, specification string) error {
-	return mysql.DelCartProductBySkuIDAndUID(userID, skuID, specification)
+	err := mysql.DelCartProductBySkuIDAndUID(userID, skuID, specification)
+	if err != nil {
+		zap.L().Error("删除用户购物车中的某个商品失败", zap.Error(err))
+		return err
+	}
+
+	// 删除缓存中的商品数据
+	// return redis.DelCartProduct(userID, skuID)
+	return nil
 }
 
 // UpdateCartProductSelected 修改购物车中商品的勾选状态
+// 缓存设计：在数据库中修改完单个商品的勾选状态后，需要覆盖缓存中该商品的缓存
 func UpdateCartProductSelected(userID, skuID int64, selected int, specification string) error {
-	return mysql.UpdateCartProductSelected(userID, skuID, selected, specification)
+	// cart, err := mysql.UpdateCartProductSelected(userID, skuID, selected, specification)
+	_, err := mysql.UpdateCartProductSelected(userID, skuID, selected, specification)
+	if err != nil {
+		zap.L().Error("修改购物车中商品的勾选状态失败", zap.Error(err), zap.Int64("skuID", skuID))
+		return err
+	}
+	// // 添加到Redis缓存中
+	// // 构建pojo.Cart对象
+	// product := &pojo.Cart{
+	// 	UserID:        userID,
+	// 	SkuID:         skuID,
+	// 	Specification: specification,
+	// 	Count:         cart.Count,
+	// 	Selected:      1,
+	// 	CreatedTime:   time.Now(),
+	// }
+	// // 创建一个存入购物车商品展示对象的通道，缓存区为1
+	// channel := make(chan *vo.CartProductVO, 1)
+	// defer close(channel)
+	// return redis.AddCartProduct(userID, skuID, CreateCartProductVO(product, channel))
+	return nil
 }
 
 // GetCarProductListCount  返回用户购物车中的商品数量
@@ -110,7 +141,16 @@ func GetCarProductListCount(userID int64) (int, error) {
 }
 
 // GetCarProductList 返回用户购物车中的商品集合
+// 缓存设计：先查看缓存中是否有用户购物车列表；如果有，直接返回。如果没有，从数据库中查询出来后，再回写到缓存中
 func GetCarProductList(userID int64) ([]*vo.CartProductVO, error) {
+	// 查看缓存中是否有该用户购物车列表数据
+	list, err := redis.GetCartProductList(userID)
+	if list != nil && err == nil {
+		zap.L().Error("使用缓存获取用户购物车中的商品集合成功")
+		return list, nil
+	}
+	zap.L().Error("使用缓存获取用户购物车中的商品集合失败", zap.Error(err))
+
 	// 获取用户购物车信息集合
 	cartList, err := mysql.SelectCartList(userID)
 	if err != nil {
@@ -127,9 +167,12 @@ func GetCarProductList(userID int64) ([]*vo.CartProductVO, error) {
 
 	for _, product := range cartList {
 		// 遍历用户购物车信息集合
-		cartVO := createCartProductVO(product, channel)
+		cartVO := build.CreateCartProductVO(product, channel)
 		data = append(data, cartVO)
 	}
+
+	// 将用户购物车列表添加到缓存中
+	_ = redis.AddCartProductList(userID, data)
 	return data, nil
 }
 
@@ -150,9 +193,9 @@ func CheckSpecificationExist(skuID int64, specification string) (error, bool) {
 		return errors.New("解析商品规格失败"), false
 	}
 
-	// // 字符串解析匹配
+	//  字符串解析匹配
 	specList := specMap["规格"]
-	// // 去除前端传递的商品规格中的空格
+	// 去除前端传递的商品规格中的空格
 	specification = strings.TrimSpace(specification)
 	var exist bool
 	for _, spec := range specList {
@@ -163,66 +206,4 @@ func CheckSpecificationExist(skuID int64, specification string) (error, bool) {
 		}
 	}
 	return nil, exist
-}
-
-// 多协程构建购物车商品展示对象
-func createCartProductVO(product *pojo.Cart, channel chan *vo.CartProductVO) *vo.CartProductVO {
-	cartVO := new(vo.CartProductVO)
-	cartVO.WG.Add(2)
-	// 将此对象放入到通道中
-	channel <- cartVO
-	// 开启两个协程，并发构建购物车商品展示对象
-	go setSkuInfo(channel, product.SkuID)
-	go setSpuInfo(channel, product.SkuID)
-	// 阻塞在此，直到VO对象完成sku、spu信息的填充
-	cartVO.WG.Wait()
-
-	// 从通道中获取已经构建完spu、sku信息的对象
-	cartVO = <-channel
-	// 除sku、spu外的属性
-	cartVO.Count = product.Count
-	cartVO.Selected = product.Selected
-	cartVO.CreatedTime = product.CreatedTime
-	cartVO.ProductSkuSpecification = product.Specification
-
-	if cartVO.Err != nil {
-		zap.L().Error("生成购物车商品展示对象失败")
-	}
-	return cartVO
-}
-
-// 完成对购物车商品对象中sku属性的赋值
-func setSkuInfo(channel chan *vo.CartProductVO, skuId int64) {
-	sku, err := mysql.SelectSkuBySkuID(skuId)
-	// 从通道中获取对象
-	cartVO := <-channel
-	if err != nil {
-		cartVO.Err = err
-		return
-	}
-
-	// 赋值
-	cartVO.SkuID = sku.ID
-	cartVO.Title = sku.Title
-	cartVO.Price = sku.Price
-	channel <- cartVO
-	defer cartVO.WG.Done()
-}
-
-// 完成对购物车商品对象中spu属性的赋值
-func setSpuInfo(channel chan *vo.CartProductVO, skuId int64) {
-	spu, err := mysql.SelectSpuBySkuID(skuId)
-
-	// 从通道中获取对象
-	cartVO := <-channel
-	if err != nil {
-		cartVO.Err = err
-		return
-	}
-
-	// 赋值
-	cartVO.DefaultPicUrl = spu.DefaultPicUrl
-	cartVO.PublishStatus = spu.PublishStatus
-	channel <- cartVO
-	defer cartVO.WG.Done()
 }

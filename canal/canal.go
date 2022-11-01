@@ -1,12 +1,9 @@
 package canal
 
 import (
-	"fmt"
-	"github.com/golang/protobuf/proto"
 	"github.com/withlin/canal-go/client"
-	pbe "github.com/withlin/canal-go/protocol/entry"
-	"log"
-	"os"
+	"go.uber.org/zap"
+	"shop-backend/rabbitmq"
 	"shop-backend/settings"
 	"time"
 )
@@ -22,69 +19,29 @@ func Init(cfg *settings.CanalConfig) {
 	if err != nil {
 		panic("CanalConfig 初始化失败: " + err.Error())
 	}
-
+	zap.L().Info("初始化canal服务成功")
 	// 监听shop库下的所有表
 	err = connector.Subscribe("shop\\..*")
 	if err != nil {
 		panic("CanalConfig 监听shop库失败: " + err.Error())
 	}
+	zap.L().Info("开始监听shop库数据变更")
 
+	// 监听数据库变更信息
 	for {
 
+		// 每次获取一百条变更数据
 		message, err := connector.Get(100, nil, nil)
 		if err != nil {
-			log.Println(err)
+			zap.L().Error("canal监听shop库，获取数据库变更信息失败", zap.Error(err))
 		}
 		batchId := message.Id
 		if batchId == -1 || len(message.Entries) <= 0 {
-			time.Sleep(300 * time.Millisecond)
+			// 如果获取到的消息集合为空，1秒后再次获取
+			time.Sleep(1 * time.Second)
 			continue
 		}
-
-		printEntry(message.Entries)
-
-	}
-}
-func printEntry(entrys []pbe.Entry) {
-
-	for _, entry := range entrys {
-		if entry.GetEntryType() == pbe.EntryType_TRANSACTIONBEGIN || entry.GetEntryType() == pbe.EntryType_TRANSACTIONEND {
-			continue
-		}
-		rowChange := new(pbe.RowChange)
-
-		err := proto.Unmarshal(entry.GetStoreValue(), rowChange)
-		checkError(err)
-		if rowChange != nil {
-			eventType := rowChange.GetEventType()
-			header := entry.GetHeader()
-			fmt.Println(fmt.Sprintf("================> binlog[%s : %d],name[%s,%s], eventType: %s", header.GetLogfileName(), header.GetLogfileOffset(), header.GetSchemaName(), header.GetTableName(), header.GetEventType()))
-
-			for _, rowData := range rowChange.GetRowDatas() {
-				if eventType == pbe.EventType_DELETE {
-					printColumn(rowData.GetBeforeColumns())
-				} else if eventType == pbe.EventType_INSERT {
-					printColumn(rowData.GetAfterColumns())
-				} else {
-					fmt.Println("-------> before")
-					printColumn(rowData.GetBeforeColumns())
-					fmt.Println("-------> after")
-					printColumn(rowData.GetAfterColumns())
-				}
-			}
-		}
-	}
-}
-
-func printColumn(columns []*pbe.Column) {
-	for _, col := range columns {
-		fmt.Println(fmt.Sprintf("%s : %s  update= %t", col.GetName(), col.GetValue(), col.GetUpdated()))
-	}
-}
-
-func checkError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
-		os.Exit(1)
+		// 将消息发送到RabbitMQ中
+		_ = rabbitmq.SendDBInfo2MQ(message.Entries)
 	}
 }

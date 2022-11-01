@@ -34,6 +34,14 @@ func NewSmsMQ() *RabbitMQ {
 	}
 }
 
+// NewCanalCartMQ 创建一个用于Canal购物车业务的新的操作RabbitMQ的对象
+func NewCanalCartMQ() *RabbitMQ {
+	return &RabbitMQ{
+		exchangeName: CanalCartExchangeName,
+		exchangeType: CanalCartExchangeType,
+	}
+}
+
 // 准备RabbitMQ的交换机
 func (mq *RabbitMQ) prepareExchange() error {
 	// 声明交换机
@@ -47,7 +55,7 @@ func (mq *RabbitMQ) prepareExchange() error {
 		nil,             // args
 	)
 	if err != nil {
-		zap.L().Error("RabbitMQ直接交换机失败", zap.Error(err))
+		zap.L().Error("RabbitMQ初始化交换机失败", zap.Error(err))
 		return err
 	}
 	return nil

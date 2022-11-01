@@ -7,3 +7,21 @@ const (
 	SmsQueueName    = "sms_queue"
 	SmsRoutingKey   = "sms_routing_key"
 )
+
+// Canal购物车服务消息队列配置
+const (
+	CanalCartExchangeName = "canal_cart_direct_exchange"
+	CanalCartExchangeType = "direct"
+
+	CanalCartInsertQueueName  = "canal_cart_insert_queue"
+	CanalCartInsertRoutingKey = "canal_cart_insert_routing_key"
+
+	CanalCartDeleteQueueName  = "canal_cart_delete_queue"
+	CanalCartDeleteRoutingKey = "canal_cart_delete_routing_key"
+
+	CanalCartUpdateQueueName  = "canal_cart_update_queue"
+	CanalCartUpdateRoutingKey = "canal_cart_update_routing_key"
+
+	CanalCartSelectQueueName  = "canal_cart_select_queue"
+	CanalCartSelectRoutingKey = "canal_cart_select_routing_key"
+)

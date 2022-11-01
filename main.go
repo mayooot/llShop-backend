@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"shop-backend/canal"
 	"shop-backend/dao/mysql"
 	"shop-backend/dao/redis"
 	"shop-backend/logger"
@@ -79,7 +80,7 @@ func main() {
 	go rabbitmq.Init(settings.Conf.RabbitMQConfig)
 
 	// 初始化Canal
-	// go canal.Init()
+	go canal.Init(settings.Conf.CanalConfig)
 
 	// 注册路由
 	r := router.SetupRouter(settings.Conf.Mode)
