@@ -71,22 +71,6 @@ func AddCartProduct(userID, skuID int64, count int, specification string) error 
 			return err
 		}
 	}
-
-	// // 添加到Redis缓存中
-	// // 构建pojo.Cart对象
-	// product := &pojo.Cart{
-	// 	UserID:        userID,
-	// 	SkuID:         skuID,
-	// 	Specification: specification,
-	// 	Count:         count,
-	// 	Selected:      1,
-	// 	CreatedTime:   time.Now(),
-	// }
-	// // 创建一个存入购物车商品展示对象的通道，缓存区为1
-	// channel := make(chan *vo.CartProductVO, 1)
-	// defer close(channel)
-	// // 添加到Redis缓存中
-	// return redis.AddCartProduct(userID, skuID, CreateCartProductVO(product, channel))
 	return nil
 }
 
@@ -98,9 +82,6 @@ func DelCartProduct(userID, skuID int64, specification string) error {
 		zap.L().Error("删除用户购物车中的某个商品失败", zap.Error(err))
 		return err
 	}
-
-	// 删除缓存中的商品数据
-	// return redis.DelCartProduct(userID, skuID)
 	return nil
 }
 
@@ -113,31 +94,18 @@ func UpdateCartProductSelected(userID, skuID int64, selected int, specification 
 		zap.L().Error("修改购物车中商品的勾选状态失败", zap.Error(err), zap.Int64("skuID", skuID))
 		return err
 	}
-	// // 添加到Redis缓存中
-	// // 构建pojo.Cart对象
-	// product := &pojo.Cart{
-	// 	UserID:        userID,
-	// 	SkuID:         skuID,
-	// 	Specification: specification,
-	// 	Count:         cart.Count,
-	// 	Selected:      1,
-	// 	CreatedTime:   time.Now(),
-	// }
-	// // 创建一个存入购物车商品展示对象的通道，缓存区为1
-	// channel := make(chan *vo.CartProductVO, 1)
-	// defer close(channel)
-	// return redis.AddCartProduct(userID, skuID, CreateCartProductVO(product, channel))
 	return nil
 }
 
 // GetCarProductListCount  返回用户购物车中的商品数量
 func GetCarProductListCount(userID int64) (int, error) {
 	// 获取用户购物车信息集合
-	cartList, err := mysql.SelectCartList(userID)
+	list, err := GetCarProductList(userID)
 	if err != nil {
+		zap.L().Error("获取用户购物车中的商品数量失败", zap.Error(err))
 		return 0, err
 	}
-	return len(cartList), nil
+	return len(list), nil
 }
 
 // GetCarProductList 返回用户购物车中的商品集合
@@ -178,16 +146,29 @@ func GetCarProductList(userID int64) ([]*vo.CartProductVO, error) {
 
 // CheckSpecificationExist 检查用户输入的商品规则是否存在
 func CheckSpecificationExist(skuID int64, specification string) (error, bool) {
-	// 获取spu
-	spu, err := mysql.SelectSpuBySkuID(skuID)
-	if err != nil {
-		zap.L().Error("用户添加到购物车的商品对应的spu不存在", zap.Error(err), zap.Int64("skuID", skuID))
-		return errors.New("用户添加到购物车的商品对应的spu不存在"), false
+	var correctSpec string
+	ret, ok := redis.GetSpuSpecification()
+	if ok {
+		// Redis缓存中该spu规格信息存在
+		correctSpec = ret
+		zap.L().Info("成功使用Redis缓存中的商品规格", zap.Int64("skuID", skuID), zap.String("specification", correctSpec))
+	} else {
+		// Redis缓存中不存在，从数据库中获取spu规格信息
+		spu, err := mysql.SelectSpuBySkuID(skuID)
+		if err != nil {
+			zap.L().Error("用户添加到购物车的商品对应的spu不存在", zap.Error(err), zap.Int64("skuID", skuID))
+			return errors.New("用户添加到购物车的商品对应的spu不存在"), false
+		}
+		correctSpec = spu.ProductSpecification
+		// 回写到Redis中
+		if err := redis.SetSpuSpecification(correctSpec); err != nil {
+			zap.L().Error("回写spu商品规格到Redis中失败", zap.Error(err))
+		}
 	}
 
 	// 解析商品规格
 	specMap := make(map[string][]string)
-	err = json.Unmarshal([]byte(spu.ProductSpecification), &specMap)
+	err := json.Unmarshal([]byte(correctSpec), &specMap)
 	if err != nil {
 		zap.L().Error("解析商品规格失败", zap.Error(err))
 		return errors.New("解析商品规格失败"), false

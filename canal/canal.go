@@ -10,6 +10,7 @@ import (
 
 // Init 初始化并连接canal服务
 func Init(cfg *settings.CanalConfig) {
+	// 构建canal连接URL
 	connector := client.NewSimpleCanalConnector(cfg.Host,
 		cfg.Port,
 		cfg.User,
@@ -20,6 +21,7 @@ func Init(cfg *settings.CanalConfig) {
 		panic("CanalConfig 初始化失败: " + err.Error())
 	}
 	zap.L().Info("初始化canal服务成功")
+
 	// 监听shop库下的所有表
 	err = connector.Subscribe("shop\\..*")
 	if err != nil {
@@ -29,7 +31,6 @@ func Init(cfg *settings.CanalConfig) {
 
 	// 监听数据库变更信息
 	for {
-
 		// 每次获取一百条变更数据
 		message, err := connector.Get(100, nil, nil)
 		if err != nil {

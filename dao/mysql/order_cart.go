@@ -13,7 +13,7 @@ func InsertCartProduct(userID, skuID int64, count int, specification string) err
 		SkuID:         skuID,
 		Specification: specification,
 		Count:         count,
-		Selected:      0, // 代表未被勾选
+		Selected:      2, // 代表未被勾选
 	}).Error
 	if err != nil {
 		return err
@@ -26,7 +26,6 @@ func SelectOneCartProductByUIDAndSkuId(userID, skuID int64, specification string
 	cart := new(pojo.Cart)
 	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).First(cart)
 	if result.Error != nil || result.RowsAffected == 0 {
-		zap.L().Error("根据用户ID和skuID删除购物车商品记录失败", zap.Error(result.Error), zap.Int64("uid", userID), zap.Int64("skuID", skuID))
 		return nil, false
 	}
 	return cart, true

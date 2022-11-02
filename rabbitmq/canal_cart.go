@@ -23,8 +23,8 @@ type CanalCartReceiver struct {
 }
 
 // NewCanalCartReceiver 初始化一个消费canal信息的mq接收者
-func NewCanalCartReceiver(queueName, routerKey string) *SmsReceiver {
-	return &SmsReceiver{
+func NewCanalCartReceiver(queueName, routerKey string) *CanalCartReceiver {
+	return &CanalCartReceiver{
 		queueName: queueName,
 		routerKey: routerKey,
 	}
@@ -101,16 +101,14 @@ func SendDBInfo2MQ(entrys []pbe.Entry) error {
 			eventType := rowChange.GetEventType()
 			for _, rowData := range rowChange.GetRowDatas() {
 				// 到此变更数据都为单条
-				data := rowData.GetAfterColumns()
 				if eventType == pbe.EventType_UPDATE || eventType == pbe.EventType_INSERT {
 					// 变更信息为更新/新增数据
-					sendMess2Queue(data, CanalCartInsertRoutingKey)
+					sendMess2Queue(rowData.GetAfterColumns(), CanalCartInsertRoutingKey)
 				} else if eventType == pbe.EventType_DELETE {
 					// 变更信息为删除数据
-					sendMess2Queue(data, CanalCartDeleteRoutingKey)
+					sendMess2Queue(rowData.GetBeforeColumns(), CanalCartDeleteRoutingKey)
 				} else {
-					// 变更信息为查询数据
-					sendMess2Queue(data, CanalCartSelectRoutingKey)
+					continue
 				}
 			}
 		}
@@ -119,7 +117,7 @@ func SendDBInfo2MQ(entrys []pbe.Entry) error {
 }
 
 // 负责发送更新或新增类型的数据库变更数据
-func sendMess2Queue(columns []*pbe.Column, messType string) {
+func sendMess2Queue(columns []*pbe.Column, routingKey string) {
 	// 构建要发送到MQ的对象
 	data := buildCartVO(columns)
 	if data == nil {
@@ -134,9 +132,9 @@ func sendMess2Queue(columns []*pbe.Column, messType string) {
 	}
 
 	// 发送消息
-	err = rabbitmqChannel.Publish(
+	err = rabbitmqChannel2.Publish(
 		CanalCartExchangeName,
-		messType,
+		routingKey,
 		false,
 		false,
 		amqp.Publishing{

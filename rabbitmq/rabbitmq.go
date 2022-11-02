@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
+	"shop-backend/utils/gen"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -146,12 +148,13 @@ func (mq *RabbitMQ) listen(receiver Receiver) {
 
 	msgs, err := mq.channel.Consume(
 		queueName, // queue
-		"",        // consumer
-		false,     // auto-ack 关闭自动应答
-		false,     // exclusive
-		false,     // no-local
-		false,     // no-wait
-		nil,       // args
+		strconv.FormatInt(gen.GenSnowflakeId(), 10), // consumer
+
+		false, // auto-ack 关闭自动应答
+		false, // exclusive
+		false, // no-local
+		false, // no-wait
+		nil,   // args
 	)
 	if nil != err {
 		receiver.OnError(fmt.Errorf("获取队列 %s 的消费通道失败: %s", queueName, err.Error()))

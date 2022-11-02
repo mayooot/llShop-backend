@@ -50,7 +50,7 @@ func Init(cfg *settings.RabbitMQConfig) {
 	// 初始化canal购物车相关的RabbitMQ实体对象
 	canalCart := NewCanalCartMQ()
 	// 将队列绑定到MQ对象上
-	canalCart.channel = rabbitmqChannel
+	canalCart.channel = rabbitmqChannel2
 	// 创建接受数据库变更信息的接收者
 	cartReceiver1 := NewCanalCartReceiver(CanalCartInsertQueueName, CanalCartInsertRoutingKey)
 	cartReceiver2 := NewCanalCartReceiver(CanalCartDeleteQueueName, CanalCartDeleteRoutingKey)

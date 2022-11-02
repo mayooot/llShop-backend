@@ -84,7 +84,7 @@ func AddCartProductList(userID int64, cartList []*vo.CartProductVO) error {
 func GetCartProductList(userID int64) ([]*vo.CartProductVO, error) {
 	key := concatstr.ConcatString(cartPrefix, strconv.FormatInt(userID, 10))
 	result, err := rdb.HGetAll(key).Result()
-	if err != nil || result == nil {
+	if err != nil || len(result) == 0 {
 		zap.L().Error("从Redis缓存中获取用户购物车列表失败", zap.Error(err))
 		return nil, err
 	}
@@ -95,10 +95,5 @@ func GetCartProductList(userID int64) ([]*vo.CartProductVO, error) {
 		_ = json.Unmarshal([]byte(ret), cart)
 		data = append(data, cart)
 	}
-	// if err := json.Unmarshal([]byte(str), &data); err != nil {
-	// 	zap.L().Error("反序列缓存中的用户购物车列表失败", zap.Error(err))
-	// 	return nil, err
-	// }
-
 	return data, nil
 }
