@@ -3,6 +3,8 @@ package mysql
 import (
 	"errors"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"shop-backend/models/pojo"
 )
 
@@ -24,8 +26,9 @@ func InsertCartProduct(userID, skuID int64, count int, specification string) err
 // SelectOneCartProductByUIDAndSkuId 根据用户ID和商品skuID和规格查询用户购物车中是否已经有该商品的记录
 func SelectOneCartProductByUIDAndSkuId(userID, skuID int64, specification string) (*pojo.Cart, bool) {
 	cart := new(pojo.Cart)
-	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).First(cart)
-	if result.Error != nil || result.RowsAffected == 0 {
+	result := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).First(cart)
+	if result.Error != nil || result.RowsAffected <= 0 {
+		// 商品不存在
 		return nil, false
 	}
 	return cart, true
@@ -33,11 +36,24 @@ func SelectOneCartProductByUIDAndSkuId(userID, skuID int64, specification string
 
 // UpdateCartProductByUIDAndSkuId 根据用户ID和商品skuID更新用户购物车下该商品数量
 func UpdateCartProductByUIDAndSkuId(userID, skuID int64, count int) error {
-	result := db.Model(&pojo.Cart{}).Where("user_id = ? and sku_id = ?", userID, skuID).Update("count", count)
-	if result.Error != nil || result.RowsAffected <= 0 {
-		zap.L().Error("更新用户购物车商品数量失败", zap.Error(result.Error), zap.Int64("uid", userID), zap.Int64("skuID", skuID))
-		return errors.New("更新用户购物车商品数量失败")
+	for time := 1; time <= 10; time++ {
+		// 开启事务
+		tx := db.Begin()
+		// 先查询
+		var cart pojo.Cart
+		tx.Where("user_id = ? and sku_id = ?", userID, skuID).First(&cart)
+		// 更新
+		result := tx.Debug().Model(&cart).Update("count", gorm.Expr("count + ?", count))
+		if result.Error != nil || result.RowsAffected <= 0 {
+			tx.Rollback()
+			zap.L().Error("--------更新用户购物车商品数量失败----------", zap.Error(result.Error), zap.Int64("RowsAffected", result.RowsAffected))
+			zap.L().Error("--------尝试自旋等待更新", zap.Int("times", time))
+		} else {
+			tx.Commit()
+			break
+		}
 	}
+
 	return nil
 }
 

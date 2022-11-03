@@ -23,7 +23,7 @@ func Init(cfg *settings.CanalConfig) {
 	zap.L().Info("初始化canal服务成功")
 
 	// 监听shop库下的所有表
-	err = connector.Subscribe("shop\\..*")
+	err = connector.Subscribe("shop\\.oms_cart")
 	if err != nil {
 		panic("CanalConfig 监听shop库失败: " + err.Error())
 	}

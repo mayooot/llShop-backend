@@ -26,6 +26,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gorm.io/driver/mysql v1.4.3
 	gorm.io/gorm v1.24.0
+	gorm.io/plugin/optimisticlock v1.1.0
 )
 
 require (

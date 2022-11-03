@@ -64,7 +64,7 @@ func OrderCartAddHandler(c *gin.Context) {
 	}
 
 	if err = logic.AddCartProduct(c.GetInt64("uid"), skuID, cartProduct.Count, cartProduct.Specification); err != nil {
-		zap.L().Error("添加商品到购物车接口，添加商品到购物车失败", zap.Error(err))
+		// zap.L().Error("添加商品到购物车接口，添加商品到购物车失败", zap.Error(err))
 		ResponseError(c, CodeServeBusy)
 		return
 	}

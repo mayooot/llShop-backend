@@ -33,15 +33,16 @@ func AddCartProduct(userID, skuID int64, count int, specification string) error 
 	if exist {
 		// 如果该商品已经存在于该用户购物车下，更新商品购买数量
 		// 如果用户本来的购买数量为10，现在传递的为-20。这样用户该商品的购买数量就为-10。这是错误的。
-		count += oldCart.Count
-		if count < 0 {
+		totalCount := oldCart.Count + count
+
+		if totalCount < 0 {
 			// 如果用户购买数量小于0
-			zap.L().Error("用户添加商品到购物车的数量小于0", zap.Int("count", count), zap.Int("stock", sku.Stock))
+			zap.L().Error("用户添加商品到购物车的数量小于0", zap.Int("totalCount", totalCount), zap.Int("stock", sku.Stock))
 			return errors.New("用户添加商品到购物车的数量小于0")
 		}
-		if count > sku.Stock {
+		if totalCount > sku.Stock {
 			// 如果用户购买数量大于库存
-			zap.L().Error("用户添加商品到购物车的数量大于该商品库存", zap.Int("count", count), zap.Int("stock", sku.Stock))
+			zap.L().Error("用户添加商品到购物车的数量大于该商品库存", zap.Int("totalCount", totalCount), zap.Int("stock", sku.Stock))
 			return errors.New("用户添加商品到购物车的数量大于该商品库存")
 		}
 
@@ -114,7 +115,7 @@ func GetCarProductList(userID int64) ([]*vo.CartProductVO, error) {
 	// 查看缓存中是否有该用户购物车列表数据
 	list, err := redis.GetCartProductList(userID)
 	if list != nil && err == nil {
-		zap.L().Error("使用缓存获取用户购物车中的商品集合成功")
+		zap.L().Info("使用缓存获取用户购物车中的商品集合成功")
 		return list, nil
 	}
 	zap.L().Error("使用缓存获取用户购物车中的商品集合失败", zap.Error(err))
@@ -147,7 +148,7 @@ func GetCarProductList(userID int64) ([]*vo.CartProductVO, error) {
 // CheckSpecificationExist 检查用户输入的商品规则是否存在
 func CheckSpecificationExist(skuID int64, specification string) (error, bool) {
 	var correctSpec string
-	ret, ok := redis.GetSpuSpecification()
+	ret, ok := redis.GetSpuSpecification(skuID)
 	if ok {
 		// Redis缓存中该spu规格信息存在
 		correctSpec = ret
@@ -161,7 +162,7 @@ func CheckSpecificationExist(skuID int64, specification string) (error, bool) {
 		}
 		correctSpec = spu.ProductSpecification
 		// 回写到Redis中
-		if err := redis.SetSpuSpecification(correctSpec); err != nil {
+		if err := redis.SetSpuSpecification(skuID, correctSpec); err != nil {
 			zap.L().Error("回写spu商品规格到Redis中失败", zap.Error(err))
 		}
 	}
