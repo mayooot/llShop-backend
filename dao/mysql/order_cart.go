@@ -10,7 +10,8 @@ import (
 
 // InsertCartProduct 添加一条商品sku信息到用户购物车下
 func InsertCartProduct(userID, skuID int64, count int, specification string) error {
-	err := db.Create(&pojo.Cart{
+	tx := db.Begin()
+	err := tx.Create(&pojo.Cart{
 		UserID:        userID,
 		SkuID:         skuID,
 		Specification: specification,
@@ -18,8 +19,10 @@ func InsertCartProduct(userID, skuID int64, count int, specification string) err
 		Selected:      2, // 代表未被勾选
 	}).Error
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
+	tx.Commit()
 	return nil
 }
 
@@ -59,24 +62,30 @@ func UpdateCartProductByUIDAndSkuId(userID, skuID int64, count int) error {
 
 // DelCartProductBySkuIDAndUID 根据用户ID和skuID删除购物车商品记录
 func DelCartProductBySkuIDAndUID(userID, skuID int64, specification string) error {
-	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).Delete(&pojo.Cart{})
+	tx := db.Begin()
+	result := tx.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).Delete(&pojo.Cart{})
 	if result.Error != nil || result.RowsAffected == 0 {
+		tx.Rollback()
 		zap.L().Error("根据用户ID和skuID删除购物车商品记录失败", zap.Error(result.Error), zap.Int64("uid", userID), zap.Int64("skuID", skuID))
 		return errors.New("根据用户ID和skuID删除购物车商品记录失败")
 	}
+	tx.Commit()
 	return nil
 }
 
 // UpdateCartProductSelected 根据用户ID和skuID修改购物车商品勾选状态
 func UpdateCartProductSelected(userID, skuID int64, selected int, specification string) (*pojo.Cart, error) {
+	tx := db.Begin()
 	cart := new(pojo.Cart)
 	cart.Selected = int8(selected)
 
 	result := db.Where("user_id = ? and sku_id = ? and specification = ?", userID, skuID, specification).Updates(cart)
 	if result.Error != nil {
+		tx.Rollback()
 		zap.L().Error("根据用户ID和skuID修改购物车商品勾选状态失败", zap.Error(result.Error), zap.Int64("uid", userID), zap.Int64("skuID", skuID), zap.Int("selected", selected))
 		return nil, errors.New("根据用户ID和skuID修改购物车商品勾选状态失败")
 	}
+	tx.Commit()
 	return cart, nil
 }
 
