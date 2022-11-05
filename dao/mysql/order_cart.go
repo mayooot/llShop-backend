@@ -42,11 +42,11 @@ func UpdateCartProductByUIDAndSkuId(userID, skuID int64, count int) error {
 	for time := 1; time <= 10; time++ {
 		// 开启事务
 		tx := db.Begin()
-		// 先查询
-		var cart pojo.Cart
-		tx.Where("user_id = ? and sku_id = ?", userID, skuID).First(&cart)
 		// 更新
-		result := tx.Debug().Model(&cart).Update("count", gorm.Expr("count + ?", count))
+		result := tx.Debug().Model(&pojo.Cart{}).
+			Where("user_id = ? and sku_id = ?", userID, skuID).
+			Update("count", gorm.Expr("count + ?", count))
+
 		if result.Error != nil || result.RowsAffected <= 0 {
 			tx.Rollback()
 			zap.L().Error("--------更新用户购物车商品数量失败----------", zap.Error(result.Error), zap.Int64("RowsAffected", result.RowsAffected))

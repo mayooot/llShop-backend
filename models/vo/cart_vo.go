@@ -30,3 +30,11 @@ type CartProductVO struct {
 	// 创建时间
 	CreatedTime time.Time `json:"createdTime"`
 }
+
+// UserCartProductVOList 用户购物车商品列表
+type UserCartProductVOList struct {
+	// 用户ID
+	UserID int64
+	// 用户购物车商品列表
+	CartList []*CartProductVO
+}

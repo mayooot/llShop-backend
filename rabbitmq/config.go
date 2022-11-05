@@ -19,9 +19,6 @@ const (
 	CanalCartDeleteQueueName  = "canal_cart_delete_queue"
 	CanalCartDeleteRoutingKey = "canal_cart_delete_routing_key"
 
-	CanalCartUpdateQueueName  = "canal_cart_update_queue"
-	CanalCartUpdateRoutingKey = "canal_cart_update_routing_key"
-
 	CanalCartSelectQueueName  = "canal_cart_select_queue"
 	CanalCartSelectRoutingKey = "canal_cart_select_routing_key"
 )

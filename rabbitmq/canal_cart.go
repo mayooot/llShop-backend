@@ -51,31 +51,48 @@ func (r *CanalCartReceiver) OnReceive(body []byte) bool {
 		zap.L().Error("消费canal购物车消息出现异常", zap.Error(r.e))
 		return false
 	}
-	data := new(pojo.Cart)
-	// 反序列json
-	err := json.Unmarshal(body, &data)
-	if err != nil {
-		zap.L().Error("canal购物车服务，解析json失败", zap.Error(err))
-		return false
-	}
 
-	if r.queueName == CanalCartInsertQueueName {
-		// 新增或更新类型的变更消息
-		// 创建一个存入购物车商品展示对象的通道，缓存区为1
-		channel := make(chan *vo.CartProductVO, 1)
-		defer close(channel)
-		// 添加到Redis缓存中
-		if err = redis.AddCartProduct(data.UserID, data.SkuID, build.CreateCartProductVO(data, channel)); err != nil {
+	if r.queueName != CanalCartSelectQueueName {
+		// 接收到的为数据库变更信息，增加、删除、更新。更新到Redis缓存的是一条购物车商品数据，所以序列化为pojo.Cart类型
+		data := new(pojo.Cart)
+		// 反序列json
+		err := json.Unmarshal(body, &data)
+		if err != nil {
+			zap.L().Error("canal购物车服务，解析json失败", zap.Error(err))
 			return false
 		}
-	} else if r.queueName == CanalCartDeleteQueueName {
-		// 删除类型的变更消息
-		if err = redis.DelCartProduct(data.UserID, data.SkuID); err != nil {
+
+		if r.queueName == CanalCartInsertQueueName {
+			// 新增或更新类型的变更消息
+			// 创建一个存入购物车商品展示对象的通道，缓存区为1
+			channel := make(chan *vo.CartProductVO, 1)
+			defer close(channel)
+			// 添加到Redis缓存中
+			if err = redis.AddCartProduct(data.UserID, data.SkuID, build.CreateCartProductVO(data, channel)); err != nil {
+				return false
+			}
+		} else if r.queueName == CanalCartDeleteQueueName {
+			// 删除类型的变更消息
+			if err = redis.DelCartProduct(data.UserID, data.SkuID); err != nil {
+				return false
+			}
+		}
+	} else if r.queueName == CanalCartSelectQueueName {
+		// 查询类型的数据
+		data := new(vo.UserCartProductVOList)
+		// 反序列json
+		err := json.Unmarshal(body, &data)
+		if err != nil {
+			zap.L().Error("canal购物车服务，解析json失败", zap.Error(err))
 			return false
 		}
-	} else {
-		//
+
+		// 将用户购物车列表添加到缓存中
+		if err = redis.AddCartProductList(data.UserID, data.CartList); err != nil {
+			return false
+		}
 	}
+	// 成功消费
 	return true
 }
 
@@ -116,7 +133,7 @@ func SendDBInfo2MQ(entrys []pbe.Entry) error {
 	return nil
 }
 
-// 负责发送更新或新增类型的数据库变更数据
+// 负责发送更新或新增、删除类型的数据库变更数据
 func sendMess2Queue(columns []*pbe.Column, routingKey string) {
 	// 构建要发送到MQ的对象
 	data := buildCartVO(columns)
@@ -135,6 +152,35 @@ func sendMess2Queue(columns []*pbe.Column, routingKey string) {
 	err = rabbitmqChannel2.Publish(
 		CanalCartExchangeName,
 		routingKey,
+		false,
+		false,
+		amqp.Publishing{
+			DeliveryMode: 2, // 2 表示消息持久化
+			ContentType:  "application/json",
+			Body:         dataJson,
+		},
+	)
+	if err != nil {
+		zap.L().Error("canal购物车服务，发送消息到RabbitMQ失败", zap.Error(err))
+		return
+	}
+	zap.L().Info("canal购物车服务，发送消息到RabbitMQ成功")
+	return
+}
+
+// SendListMess2Queue 负责发送用户购物车列表数据
+func SendListMess2Queue(data *vo.UserCartProductVOList) {
+	// 转换为json数据
+	dataJson, err := json.Marshal(data)
+	if err != nil {
+		zap.L().Error("canal购物车服务，购物车商品列表序列化为json失败", zap.Error(err))
+		return
+	}
+
+	// 发送消息
+	err = rabbitmqChannel2.Publish(
+		CanalCartExchangeName,
+		CanalCartSelectRoutingKey,
 		false,
 		false,
 		amqp.Publishing{

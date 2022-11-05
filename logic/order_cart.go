@@ -7,6 +7,7 @@ import (
 	"shop-backend/dao/mysql"
 	"shop-backend/dao/redis"
 	"shop-backend/models/vo"
+	"shop-backend/rabbitmq"
 	"shop-backend/utils/build"
 	"strings"
 )
@@ -140,8 +141,12 @@ func GetCarProductList(userID int64) ([]*vo.CartProductVO, error) {
 		data = append(data, cartVO)
 	}
 
-	// 将用户购物车列表添加到缓存中
-	_ = redis.AddCartProductList(userID, data)
+	// 将要加入Redis缓存的用户购物车列表异步发送到MQ
+	rabbitmq.SendListMess2Queue(&vo.UserCartProductVOList{
+		UserID:   userID,
+		CartList: data,
+	})
+
 	return data, nil
 }
 
