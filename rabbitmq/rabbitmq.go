@@ -148,7 +148,7 @@ func (mq *RabbitMQ) listen(receiver Receiver) {
 
 	msgs, err := mq.channel.Consume(
 		queueName, // queue
-		strconv.FormatInt(gen.GenSnowflakeId(), 10), // consumer
+		strconv.FormatInt(gen.GenSnowflakeID(), 10), // consumer
 
 		false, // auto-ack 关闭自动应答
 		false, // exclusive

@@ -36,6 +36,7 @@ const (
 	CodeSearchConditionIsNil
 	CodeDeleteCartProductFailed
 	CodeUpdateCartProductStatusFailed
+	CodeCreatePreSubmitOrderSuccess
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -73,6 +74,7 @@ var codeMsgMap = map[ResCode]string{
 	CodeSearchConditionIsNil:          "搜索条件为空",
 	CodeDeleteCartProductFailed:       "删除失败",
 	CodeUpdateCartProductStatusFailed: "选择购物车商品失败",
+	CodeCreatePreSubmitOrderSuccess:   "创建订单成功🧪",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息

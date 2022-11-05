@@ -20,7 +20,7 @@ func Init(startTime string, machineId int64) (err error) {
 	return
 }
 
-// GenSnowflakeId 生成雪花算法ID
-func GenSnowflakeId() int64 {
+// GenSnowflakeID 生成雪花算法ID
+func GenSnowflakeID() int64 {
 	return node.Generate().Int64()
 }

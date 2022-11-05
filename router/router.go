@@ -77,7 +77,11 @@ func SetupRouter(mode string) *gin.Engine {
 		// 修改购物车商品勾选状态
 		cartGroup.PUT("/product/status", controller.OrderCartUpdateSelectedHandler)
 	}
-
+	orderGroup := commonGroup.Group("/oms/order").Use(middleware.JWTAuthMiddleware())
+	{
+		// 生成预提交订单
+		orderGroup.POST("/presubmit", controller.OrderPreSubmitHandler)
+	}
 	r.NoRoute(func(c *gin.Context) {
 		controller.ResponseErrorWithMsg(c, http.StatusBadRequest, gin.H{"msg": "404"})
 	})

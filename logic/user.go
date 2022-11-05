@@ -76,7 +76,7 @@ func SignUp(u *dto.SignUp) error {
 	}
 
 	// 生成uid
-	uid := gen.GenSnowflakeId()
+	uid := gen.GenSnowflakeID()
 	user := &pojo.UmsUser{
 		ID:       uid,
 		Username: randomname.GenerateName(),

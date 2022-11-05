@@ -16,6 +16,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2
+	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/viper v1.13.0
 	github.com/streadway/amqp v1.0.0
 	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a

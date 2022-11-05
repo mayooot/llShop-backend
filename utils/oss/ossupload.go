@@ -33,7 +33,7 @@ func Init(cfg *settings.AliyunConfig) error {
 // UploadPic 上传文件到阿里云服务器
 func UploadPic(file io.Reader) (string, error) {
 	// 雪花算法生成全局唯一图片名称
-	id := gen.GenSnowflakeId()
+	id := gen.GenSnowflakeID()
 	// 将int64转换为字符串
 	idStr := strconv.FormatInt(id, 10)
 	// 生成文件名
