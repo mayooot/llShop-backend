@@ -77,11 +77,29 @@ func SetupRouter(mode string) *gin.Engine {
 		// 修改购物车商品勾选状态
 		cartGroup.PUT("/product/status", controller.OrderCartUpdateSelectedHandler)
 	}
+
+	// 订单路由组，需要鉴权
 	orderGroup := commonGroup.Group("/oms/order").Use(middleware.JWTAuthMiddleware())
 	{
 		// 生成预提交订单
 		orderGroup.POST("/presubmit", controller.OrderPreSubmitHandler)
 	}
+
+	// 收货地址路由组，需要鉴权
+	receiverAddressGroup := commonGroup.Group("/user/receiveraddress").Use(middleware.JWTAuthMiddleware())
+	{
+		// 获取数据库中所有的地址，用于用户选择
+		receiverAddressGroup.GET("/list", controller.UserReceiverAddressListHandler)
+		// 增加一条收货地址
+		receiverAddressGroup.POST("/add", controller.UserReceiverAddressAddHandler)
+		// 删除一条收货地址
+		receiverAddressGroup.DELETE("/delete/:id", controller.UserReceiverAddressDeleteHandler)
+		// 获取用户的收货地址列表
+		receiverAddressGroup.GET("/my", controller.UserReceiverAddressPersonHandler)
+		// 修改一条收货地址
+		receiverAddressGroup.PUT("/update", controller.UserReceiverAddressUpdateHandler)
+	}
+
 	r.NoRoute(func(c *gin.Context) {
 		controller.ResponseErrorWithMsg(c, http.StatusBadRequest, gin.H{"msg": "404"})
 	})

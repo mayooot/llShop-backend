@@ -115,7 +115,7 @@ func GetCarProductListCount(userID int64) (int, error) {
 func GetCarProductList(userID int64) ([]*vo.CartProductVO, error) {
 	// 查看缓存中是否有该用户购物车列表数据
 	list, err := redis.GetCartProductList(userID)
-	if list != nil && err == nil {
+	if len(list) > 0 && err == nil {
 		zap.L().Info("使用缓存获取用户购物车中的商品集合成功")
 		return list, nil
 	}

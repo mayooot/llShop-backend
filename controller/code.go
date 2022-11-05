@@ -37,6 +37,8 @@ const (
 	CodeDeleteCartProductFailed
 	CodeUpdateCartProductStatusFailed
 	CodeCreatePreSubmitOrderSuccess
+	CodeAddReceiverAddressFailed
+	CodeUpdateReceiverAddressFailed
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -75,6 +77,8 @@ var codeMsgMap = map[ResCode]string{
 	CodeDeleteCartProductFailed:       "删除失败",
 	CodeUpdateCartProductStatusFailed: "选择购物车商品失败",
 	CodeCreatePreSubmitOrderSuccess:   "创建订单成功🧪",
+	CodeAddReceiverAddressFailed:      "添加收货地址失败，等会再试试吧😴",
+	CodeUpdateReceiverAddressFailed:   "修改收货地址失败，等会再试试吧😴",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息
