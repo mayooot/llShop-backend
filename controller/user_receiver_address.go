@@ -5,6 +5,7 @@ import (
 	"go.uber.org/zap"
 	"shop-backend/logic"
 	"shop-backend/models/dto"
+	"shop-backend/utils/check"
 	"strconv"
 )
 
@@ -40,6 +41,14 @@ func UserReceiverAddressAddHandler(c *gin.Context) {
 		ResponseError(c, CodeInvalidParams)
 		return
 	}
+
+	// 新增一条用户的收货地址，不需要携带主键ID
+	if !(address.DefaultStatus == 1 || address.DefaultStatus == 2) || address.ReceiverName == "" || !check.VerifyMobileFormat(address.ReceiverPhone) || address.DetailAddress == "" {
+		// 收货地址状态不为1或2 || 收货人为空 || 手机号格式不正确 || 详细地址为空
+		ResponseError(c, CodeInvalidParams)
+		return
+	}
+
 	err := logic.AddReceiverAddress(address, c.GetInt64("uid"))
 	if err != nil {
 		zap.L().Error("新增用户收货地址接口，添加失败", zap.Error(err))
@@ -64,6 +73,14 @@ func UserReceiverAddressUpdateHandler(c *gin.Context) {
 		ResponseError(c, CodeInvalidParams)
 		return
 	}
+
+	// 修改用户的一条收货地址信息，需要携带主键ID
+	if address.DetailAddress == "" || !(address.DefaultStatus == 1 || address.DefaultStatus == 2) || address.ReceiverName == "" || !check.VerifyMobileFormat(address.ReceiverPhone) || address.DetailAddress == "" {
+		// 主键ID为空 || 收货地址状态不为1或2 || 收货人为空 || 手机号格式不正确 || 详细地址为空
+		ResponseError(c, CodeInvalidParams)
+		return
+	}
+
 	err := logic.UpdateReceiverAddress(address, c.GetInt64("uid"))
 	if err != nil {
 		zap.L().Error("修改用户收货地址接口，修改失败", zap.Error(err))

@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"go.uber.org/zap"
+	"gorm.io/gorm/clause"
 	"shop-backend/models/pojo"
 )
 
@@ -52,7 +53,7 @@ func UpdateDefaultReceiverAddress(address *pojo.ReceiverAddress) error {
 		return err
 	}
 	// 更新本行信息
-	err = tx.Debug().Model(&pojo.ReceiverAddress{}).
+	err = tx.Model(&pojo.ReceiverAddress{}).
 		Where("id = ? and user_id = ?", address.ID, address.UserID).
 		Updates(&pojo.ReceiverAddress{
 			CountyID:      address.CountyID,
@@ -110,9 +111,43 @@ func SelectPCDByID(id int) (*pojo.PCDDic, error) {
 
 // DelReceiverAddress 使用主键ID和用户ID删除用户的收货地址
 func DelReceiverAddress(id int, uid int64) error {
-	if err := db.Where("id = ? and user_id = ?", id, uid).Delete(&pojo.ReceiverAddress{}).Error; err != nil {
+	tx := db.Begin()
+	address := &pojo.ReceiverAddress{}
+	// 先删除这条收货地址，并获取这条记录的default_status。如果为默认地址，那么就将下一条数据作为默认地址；如果不是，那么直接返回；
+	err := tx.Clauses(clause.Returning{Columns: []clause.Column{{Name: "default_status"}}}).Where("id = ? and user_id = ?", id, uid).Delete(address).Error
+	if err != nil {
+		tx.Rollback()
 		zap.L().Error("使用主键ID和用户ID删除用户的收货地址失败", zap.Error(err))
 		return err
 	}
-	return nil
+
+	if address.DefaultStatus == 2 {
+		// 删除的不是默认收货地址
+		tx.Commit()
+		return nil
+	} else {
+		address = &pojo.ReceiverAddress{}
+		// 是默认收货地址，如果还存在其他收货地址，那么将下一条记录设置为默认地址
+		err = tx.Model(address).Where("user_id = ?", uid).First(address).Error
+		if err != nil {
+			tx.Rollback()
+			zap.L().Error("删除用户默认地址后，获取下一条收货地址失败", zap.Error(err))
+			return err
+		}
+		if address == nil {
+			// 已经不存在其他收货地址
+			tx.Commit()
+			return nil
+		} else {
+			// 存在其他收货地址，将用户的第一条修改为默认地址
+			err = tx.Model(&pojo.ReceiverAddress{}).Where("id = ? and user_id = ?", address.ID, uid).Update("default_status", 1).Error
+			if err != nil {
+				tx.Rollback()
+				zap.L().Error("存在其他收货地址，将用户的第一条修改为默认地址失败", zap.Error(err))
+				return err
+			}
+			tx.Commit()
+			return nil
+		}
+	}
 }
