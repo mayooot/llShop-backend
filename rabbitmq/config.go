@@ -22,3 +22,9 @@ const (
 	CanalCartSelectQueueName  = "canal_cart_select_queue"
 	CanalCartSelectRoutingKey = "canal_cart_select_routing_key"
 )
+
+// 提交订单后，异步删除购物车消息队列配置
+const (
+	CartDelExchangeName = "cart_del_direct_exchange"
+	CartDelExchangeType = "direct"
+)

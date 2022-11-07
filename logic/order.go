@@ -4,8 +4,10 @@ import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 	"shop-backend/dao/mysql"
+	"shop-backend/dao/redis"
 	"shop-backend/models/dto"
 	"shop-backend/models/vo"
+	"shop-backend/rabbitmq"
 	"shop-backend/utils/build"
 	"shop-backend/utils/gen"
 )
@@ -58,5 +60,30 @@ func CreatePreSubmitOrder(preSubmitOrder *dto.PreSubmitOrder, uid int64) (*vo.Or
 	orderVO.TotalMoney = totalMoney.String()
 	orderVO.Freight = freight.String()
 	orderVO.PayMoney = payMoney.String()
+
+	// 将订单编号设置进Redis，并设置5分钟的失效时间。实现提交订单幂等性和限流
+	err := redis.SetOrderNumber(orderVO.OrderNumber)
+	if err != nil {
+		return nil, err
+	}
 	return orderVO, nil
+}
+
+// CreateSubmitOrder 创建订单
+// 1. 生成订单
+// 2. 校验库存
+// 3. 扣减库存
+// 4. 生成订单明细
+// 5. 清空购物车
+// 6. 失败后或者未支付回滚库存
+func CreateSubmitOrder(orderDTO *dto.Order, uid, orderNum int64) error {
+	// 生成订单 && 校验库存和商品状态 && 生成订单明细
+	err := mysql.CreateOrderAndOrderItem(orderDTO, uid, orderNum)
+	if err != nil {
+		return err
+	}
+
+	// 异步清除购物车
+	go rabbitmq.SendCartDelMess2MQ(orderDTO.CartProductList, uid)
+	return nil
 }

@@ -39,6 +39,8 @@ const (
 	CodeCreatePreSubmitOrderSuccess
 	CodeAddReceiverAddressFailed
 	CodeUpdateReceiverAddressFailed
+	CodeOrderNumISNotExistOrExpired
+	CodeCreateSubmitOrderSuccess
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -79,6 +81,8 @@ var codeMsgMap = map[ResCode]string{
 	CodeCreatePreSubmitOrderSuccess:   "创建订单成功🧪",
 	CodeAddReceiverAddressFailed:      "添加收货地址失败，等会再试试吧😴",
 	CodeUpdateReceiverAddressFailed:   "修改收货地址失败，等会再试试吧😴",
+	CodeOrderNumISNotExistOrExpired:   "请刷新预提交订单🪬",
+	CodeCreateSubmitOrderSuccess:      "订单提交成功🐔",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息

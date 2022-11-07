@@ -9,6 +9,7 @@ import (
 var rabbitmqConn *amqp.Connection
 var rabbitmqChannel *amqp.Channel
 var rabbitmqChannel2 *amqp.Channel
+var rabbitmqChannel3 *amqp.Channel
 var err error
 
 // Init 初始化RabbitMQ
@@ -32,6 +33,11 @@ func Init(cfg *settings.RabbitMQConfig) {
 	}
 
 	rabbitmqChannel2, err = rabbitmqConn.Channel()
+	if err != nil {
+		panic("打开Channel失败: " + err.Error())
+	}
+
+	rabbitmqChannel3, err = rabbitmqConn.Channel()
 	if err != nil {
 		panic("打开Channel失败: " + err.Error())
 	}

@@ -13,9 +13,9 @@ type Order struct {
 	// 订单商品集合
 	CartProductList []*CartProduct `json:"cartProductList" binding:"required"`
 	// 收货人姓名
-	ReceiverName string `json:"receiverName"`
+	ReceiverName string `json:"receiverName" binding:"required"`
 	// 收货人手机号
-	ReceiverPhone string `json:"receiverPhone"`
+	ReceiverPhone string `json:"receiverPhone" binding:"required"`
 	// 收货人地址
-	ReceiverAddress string `json:"receiverAddress"`
+	ReceiverAddress string `json:"receiverAddress" binding:"required"`
 }
