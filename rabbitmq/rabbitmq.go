@@ -44,6 +44,30 @@ func NewCanalCartMQ() *RabbitMQ {
 	}
 }
 
+// NewCartDelMQ 创建一个用于异步删除购物车的新的操作RabbitMQ的对象
+func NewCartDelMQ() *RabbitMQ {
+	return &RabbitMQ{
+		exchangeName: CartDelExchangeName,
+		exchangeType: CartDelExchangeType,
+	}
+}
+
+// NewOrderMQ 创建一个用于订单超时回滚的新的操作RabbitMQ的对象
+func NewOrderMQ() *RabbitMQ {
+	return &RabbitMQ{
+		exchangeName: OrderExchangeName,
+		exchangeType: OrderExchangeType,
+	}
+}
+
+// NewDelayOrderMQ 创建一个用于订单超时回滚的新的操作RabbitMQ的对象
+func NewDelayOrderMQ() *RabbitMQ {
+	return &RabbitMQ{
+		exchangeName: DelayOrderExchangeName,
+		exchangeType: DelayOrderExchangeType,
+	}
+}
+
 // 准备RabbitMQ的交换机
 func (mq *RabbitMQ) prepareExchange() error {
 	// 声明交换机
@@ -65,9 +89,12 @@ func (mq *RabbitMQ) prepareExchange() error {
 
 // run 开始获取连接并初始化相关操作
 func (mq *RabbitMQ) run() {
-	// 初始化Exchange
 	mq.prepareExchange()
-
+	if mq.exchangeName == OrderExchangeName {
+		// 超时订单服务，不需要接收者
+		forever := make(chan bool)
+		<-forever
+	}
 	for _, receiver := range mq.receivers {
 		// 一个RabbitMQ对象可以对应多个消费者，每个消费者的加入都会使得WaitGroup+1
 		mq.wg.Add(1)
@@ -114,6 +141,13 @@ func (mq *RabbitMQ) listen(receiver Receiver) {
 	queueName := receiver.QueueName()
 	routerKey := receiver.RoutingKey()
 
+	var args = make(amqp.Table, 0)
+	if queueName == OrderQueueName {
+		// 如果为订单相关操作的队列。指定死信队列相关信息
+		args["x-dead-letter-exchange"] = DelayOrderExchangeName
+		args["x-dead-letter-routing-key"] = DelayOrderRoutingKey
+	}
+
 	// 声明Queue
 	_, err := mq.channel.QueueDeclare(
 		queueName, // name
@@ -121,7 +155,7 @@ func (mq *RabbitMQ) listen(receiver Receiver) {
 		false,     // delete when unused
 		false,     // exclusive(排他性队列)
 		false,     // no-wait
-		nil,       // arguments
+		args,      // arguments
 	)
 	if nil != err {
 		// 当队列初始化失败的时候，需要告诉这个接收者相应的错误
@@ -166,8 +200,10 @@ func (mq *RabbitMQ) listen(receiver Receiver) {
 		// 比如网络问题导致的数据库连接失败，redis连接失败等等这种
 		// 通过重试可以成功的操作，那么这个时候是需要重试的
 		// 直到数据处理成功后再返回，然后才会回复rabbitmq ack
-		for !receiver.OnReceive(msg.Body) {
+		times := 10
+		for !receiver.OnReceive(msg.Body) && times >= 0 {
 			zap.L().Error("receiver 数据处理失败，将要重试")
+			times--
 			time.Sleep(1 * time.Second)
 		}
 

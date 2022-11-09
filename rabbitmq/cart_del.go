@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"shop-backend/dao/mysql"
 	"shop-backend/models/dto"
+	"strconv"
 )
 
 // CartDelReceiver 实现了Receiver接口，负责异步删除用户购物车
@@ -45,26 +46,29 @@ func (r *CartDelReceiver) OnReceive(body []byte) bool {
 		zap.L().Error("消费异步删除购物车消息出现异常", zap.Error(r.e))
 		return false
 	}
-	data := make([]*dto.CartProduct, 0)
+	data := new(dto.CartProductListDTO)
 	_ = json.Unmarshal(body, &data)
-
-	for cart := range data {
-		mysql.DelCartProductBySkuIDAndUID()
+	uid := data.UserID
+	for _, cart := range data.CartProductList {
+		skuId, _ := strconv.ParseInt(cart.SkuID, 10, 64)
+		err := mysql.DelCartProductBySkuIDAndUID(uid, skuId, cart.Specification)
+		if err != nil {
+			return false
+		}
 	}
 	return true
 }
 
 // SendCartDelMess2MQ 负责发送要删除的购物车商品信息到RabbitMQ
-func SendCartDelMess2MQ(data []*dto.CartProduct) {
+func SendCartDelMess2MQ(data *dto.CartProductListDTO) {
 	sendSucc := false
-
 	for !sendSucc {
 		// 转换为json数据
 		dataJson, _ := json.Marshal(data)
 		// 发送消息
 		err = rabbitmqChannel3.Publish(
 			CartDelExchangeName,
-			CartDelExchangeType,
+			CartDeleteRoutingKey,
 			false,
 			false,
 			amqp.Publishing{
@@ -79,5 +83,4 @@ func SendCartDelMess2MQ(data []*dto.CartProduct) {
 		sendSucc = true
 		zap.L().Info("异步删除购物车服务，发送消息到RabbitMQ成功")
 	}
-
 }

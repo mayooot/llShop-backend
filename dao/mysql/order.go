@@ -107,6 +107,11 @@ func CreateOrderAndOrderItem(orderDTO *dto.Order, uid, orderNum int64) error {
 		orderItem.ProductName = sku.Title
 		orderItem.ProductPrice = sku.Price
 		orderItem.ProductQuantity = product.Count
+		// 计算该商品的总金额
+		itemPrice := decimal.NewFromFloat(sku.Price)
+		itemCount := decimal.NewFromFloat(float64(product.Count))
+		itemTotalMoney := itemPrice.Mul(itemCount)
+		orderItem.ProductTotalMoney = itemTotalMoney.InexactFloat64()
 		// 获取商品图片
 		skuPic := &pojo.SkuPic{}
 		result = tx.Model(skuPic).Where("sku_id = ? and is_default = 1", sku.ID).First(skuPic)
@@ -142,6 +147,92 @@ func CreateOrderAndOrderItem(orderDTO *dto.Order, uid, orderNum int64) error {
 		zap.L().Error("订单入库失败", zap.Int64("skuID", orderNum), zap.Error(result.Error))
 		return errors.New("订单入库失败")
 	}
+	tx.Commit()
+	return nil
+}
+
+// SelectAllOrder 返回用户所有订单主表信息
+func SelectAllOrder(uid int64) ([]*pojo.Order, error) {
+	data := make([]*pojo.Order, 0)
+	if err := db.Model(&pojo.Order{}).Where("user_id = ?", uid).Find(&data).Error; err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+// SelectOneOrderItem 返回一条订单的明细信息
+func SelectOneOrderItem(id int64) ([]*pojo.OrderItem, error) {
+	data := make([]*pojo.OrderItem, 0)
+	result := db.Model(&pojo.OrderItem{}).Where("order_id = ?", id).Find(&data)
+	if result.Error != nil || result.RowsAffected <= 0 {
+		// 查询过程中出现异常或者查询到的行数为0
+		zap.L().Error("获取订单明细失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
+		return nil, errors.New("订单明细不存在")
+	}
+	return data, nil
+}
+
+// SelectOrderOrderStatus 返回订单状态
+func SelectOrderOrderStatus(id int64) (uint8, error) {
+	order := &pojo.Order{ID: id}
+	result := db.Model(order).First(order)
+	if result.Error != nil || result.RowsAffected <= 0 {
+		zap.L().Error("获取订单状态失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
+		return 0, errors.New("获取订单状态失败")
+	}
+	return order.OrderStatus, nil
+}
+
+// UpdateOrderOrderStatus 修改订单支付状态
+func UpdateOrderOrderStatus(id int64, orderStatus uint8) error {
+	result := db.Model(&pojo.Order{ID: id}).Update("order_status", orderStatus)
+	if result.Error != nil || result.RowsAffected <= 0 {
+		zap.L().Error("修改订单状态失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
+		return errors.New("修改订单状态失败")
+	}
+	return nil
+}
+
+// RollbackOrderStock 回滚订单超时未支付的商品库存
+func RollbackOrderStock(id int64) error {
+	// 查询订单所包含的所有商品明细
+	tx := db.Begin()
+	items := make([]*pojo.OrderItem, 0)
+	result := tx.Model(&pojo.OrderItem{}).Where("order_id = ?", id).Find(&items)
+	if result.Error != nil || result.RowsAffected <= 0 {
+		tx.Rollback()
+		zap.L().Error("查询订单所包含的所有商品明细失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
+		return errors.New("查询订单所包含的所有商品明细失败")
+	}
+
+	// 遍历
+	for _, item := range items {
+		// 判断商品是否已经下架，如果已经下架，无需回滚库存
+		sku := new(pojo.Sku)
+		err := tx.Model(&pojo.Sku{ID: item.SkuID}).First(sku).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// 没有找到商品记录，可能是商品已经下架，并删除了数据库中的记录
+				continue
+			}
+			tx.Rollback()
+			return err
+		} else {
+			// 异常为空，但是商品已经下架，数据库记录未删除
+			if sku.Valid == 0 {
+				continue
+			}
+		}
+
+		// 回滚库存(使用Version字段解决并发下的更新问题)
+		result = tx.Model(&pojo.Sku{ID: item.SkuID}).Update("stock", gorm.Expr("stock + ?", item.ProductQuantity))
+		if result.Error != nil || result.RowsAffected <= 0 {
+			tx.Rollback()
+			zap.L().Error("回滚商品库存失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
+			return errors.New("回滚商品库存失败")
+		}
+	}
+	// 库存全部都回滚成功
 	tx.Commit()
 	return nil
 }

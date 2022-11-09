@@ -85,6 +85,10 @@ func SetupRouter(mode string) *gin.Engine {
 		orderGroup.POST("/presubmit", controller.OrderPreSubmitHandler)
 		// 提交订单
 		orderGroup.POST("/submit", controller.OrderSubmitHandler)
+		// 获取用户所有的订单
+		orderGroup.GET("/all", controller.OrderGetAllHandler)
+		// 获取订单明细
+		orderGroup.GET("/one/:num", controller.OrderGetOneOrderItemHandler)
 	}
 
 	// 收货地址路由组，需要鉴权

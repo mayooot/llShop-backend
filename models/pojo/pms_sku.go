@@ -1,16 +1,20 @@
 package pojo
 
-import "time"
+import (
+	"gorm.io/plugin/optimisticlock"
+	"time"
+)
 
 // Sku 商品sku表
 type Sku struct {
 	// 主键
 	ID int64 `gorm:"column:id"`
 	// 商品spuID(对应商品spu表主键ID)
-	SpuID int64 `gorm:"column:spu_id"`
-	// 库存
-	Sale int `gorm:"column:sale"`
+	SpuID   int64                  `gorm:"column:spu_id"`
+	Version optimisticlock.Version `gorm:"column:version"`
 	// 销量
+	Sale int `gorm:"column:sale"`
+	// 库存
 	Stock int `gorm:"column:stock"`
 	// 默认规格：0->不是；1->是
 	IsDefault uint8 `gorm:"column:is_default"`

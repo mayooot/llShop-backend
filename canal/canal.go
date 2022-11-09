@@ -46,3 +46,7 @@ func Init(cfg *settings.CanalConfig) {
 		_ = rabbitmq.SendDBInfo2MQ(message.Entries)
 	}
 }
+
+func listen() {
+
+}

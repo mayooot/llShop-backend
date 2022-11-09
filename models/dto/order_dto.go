@@ -19,3 +19,9 @@ type Order struct {
 	// 收货人地址
 	ReceiverAddress string `json:"receiverAddress" binding:"required"`
 }
+
+// CartProductListDTO 封装用户订单中的商品集合和用户ID
+type CartProductListDTO struct {
+	UserID          int64
+	CartProductList []*CartProduct
+}

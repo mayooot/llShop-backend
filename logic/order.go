@@ -6,6 +6,7 @@ import (
 	"shop-backend/dao/mysql"
 	"shop-backend/dao/redis"
 	"shop-backend/models/dto"
+	"shop-backend/models/pojo"
 	"shop-backend/models/vo"
 	"shop-backend/rabbitmq"
 	"shop-backend/utils/build"
@@ -84,6 +85,23 @@ func CreateSubmitOrder(orderDTO *dto.Order, uid, orderNum int64) error {
 	}
 
 	// 异步清除购物车
-	go rabbitmq.SendCartDelMess2MQ(orderDTO.CartProductList, uid)
+	go rabbitmq.SendCartDelMess2MQ(&dto.CartProductListDTO{
+		UserID:          uid,
+		CartProductList: orderDTO.CartProductList,
+	})
+
+	// 订单超时未支付后回滚库存并将订单状态改成超时未支付
+	go rabbitmq.SendDelayOrderMess2MQ(orderNum)
+
 	return nil
+}
+
+// GetAllOrder 返回用户所有订单
+func GetAllOrder(uid int64) ([]*pojo.Order, error) {
+	return mysql.SelectAllOrder(uid)
+}
+
+// GetOneOrderItem 返回一条订单的明细信息
+func GetOneOrderItem(id int64) ([]*pojo.OrderItem, error) {
+	return mysql.SelectOneOrderItem(id)
 }

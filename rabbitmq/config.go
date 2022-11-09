@@ -27,4 +27,23 @@ const (
 const (
 	CartDelExchangeName = "cart_del_direct_exchange"
 	CartDelExchangeType = "direct"
+
+	CartDeleteQueueName  = "cart_delete_queue"
+	CartDeleteRoutingKey = "cart_delete_routing_key"
+)
+
+// 订单超时未支付回滚消息队列配置
+const (
+	OrderExchangeName = "order_exchange"
+	OrderExchangeType = "direct"
+	OrderQueueName    = "order_queue"
+	OrderRoutingKey   = "order_routing_key"
+
+	DelayOrderExchangeName = "delay_order_exchange"
+	DelayOrderExchangeType = "direct"
+	DelayOrderQueueName    = "delay_order_queue"
+	DelayOrderRoutingKey   = "delay_order_routing_key"
+
+	// DelayOrderTTL 订单在30分钟后未支付，就会进入死信队列(单位:毫秒)
+	DelayOrderTTL = "60000"
 )

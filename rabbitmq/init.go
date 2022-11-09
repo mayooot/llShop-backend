@@ -10,6 +10,7 @@ var rabbitmqConn *amqp.Connection
 var rabbitmqChannel *amqp.Channel
 var rabbitmqChannel2 *amqp.Channel
 var rabbitmqChannel3 *amqp.Channel
+var rabbitmqChannel4 *amqp.Channel
 var err error
 
 // Init 初始化RabbitMQ
@@ -42,9 +43,14 @@ func Init(cfg *settings.RabbitMQConfig) {
 		panic("打开Channel失败: " + err.Error())
 	}
 
+	rabbitmqChannel4, err = rabbitmqConn.Channel()
+	if err != nil {
+		panic("打开Channel失败: " + err.Error())
+	}
+
 	// 初始化短信相关的RabbitMQ实体对象
 	smsMQ := NewSmsMQ()
-	// 将队列绑定到MQ对象上
+	// 将管道绑定到MQ对象上
 	smsMQ.channel = rabbitmqChannel
 	// 创建接受短信信息的接收者
 	smsReceiver := NewSmsReceiver(SmsQueueName, SmsRoutingKey)
@@ -55,7 +61,7 @@ func Init(cfg *settings.RabbitMQConfig) {
 
 	// 初始化canal购物车相关的RabbitMQ实体对象
 	canalCart := NewCanalCartMQ()
-	// 将队列绑定到MQ对象上
+	// 将管道绑定到MQ对象上
 	canalCart.channel = rabbitmqChannel2
 	// 创建接受数据库变更信息的接收者
 	cartReceiver1 := NewCanalCartReceiver(CanalCartInsertQueueName, CanalCartInsertRoutingKey)
@@ -67,6 +73,38 @@ func Init(cfg *settings.RabbitMQConfig) {
 	canalCart.RegisterReceiver(cartReceiver3)
 	// 启动
 	go canalCart.Start()
+
+	// 初始化异步删除购物车相关的RabbitMQ实体对象
+	cartDel := NewCartDelMQ()
+	// 将管道绑定到MQ对象上
+	cartDel.channel = rabbitmqChannel3
+	// 创建接受数据库变更信息的接收者
+	cartDelReceiver := NewCartDelReceiver(CartDeleteQueueName, CartDeleteRoutingKey)
+	// 将接收者绑定到RabbitMQ实体对象
+	cartDel.RegisterReceiver(cartDelReceiver)
+	// 启动
+	go cartDel.Start()
+
+	// 初始化订单相关的RabbitMQ实体对象
+	order := NewOrderMQ()
+	// 将管道绑定到MQ对象上
+	order.channel = rabbitmqChannel4
+	// 暂时不需要消费普通订单队列中的消息
+	// orderReceiver := NewOrderReceiver(OrderQueueName, OrderRoutingKey)
+	// 将接收者绑定到RabbitMQ实体对象
+	// order.RegisterReceiver(orderReceiver)
+	go order.Start()
+
+	// 初始化订单超时回滚相关的RabbitMQ实体对象
+	delayOrder := NewDelayOrderMQ()
+	// 将管道绑定到MQ对象上
+	delayOrder.channel = rabbitmqChannel4
+	// 创建接受数据库变更信息的接收者
+	delayOrderReceiver := NewDelayOrderReceiver(DelayOrderQueueName, DelayOrderRoutingKey)
+	// 将接收者绑定到RabbitMQ实体对象
+	delayOrder.RegisterReceiver(delayOrderReceiver)
+	// 启动
+	go delayOrder.Start()
 }
 
 // Destroy 销毁RabbitMQ连接和通道

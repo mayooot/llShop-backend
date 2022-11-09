@@ -73,3 +73,48 @@ func OrderSubmitHandler(c *gin.Context) {
 	}
 	ResponseSuccessWithMsg(c, CodeCreateSubmitOrderSuccess.Msg(), nil)
 }
+
+// OrderGetAllHandler 获取用户所有的订单
+// @Summary 获取用户所有的订单
+// @Description 前端需要携带Token，鉴权后返回用户所有的订单主要信息
+// @Tags 订单相关接口
+// @Produce json
+// @param Authorization header string true "Bearer AToken&RToken"
+// @Router /oms/order/all [get]
+func OrderGetAllHandler(c *gin.Context) {
+	data, err := logic.GetAllOrder(c.GetInt64("uid"))
+	if err != nil {
+		zap.L().Error("获取用户所有的订单失败", zap.Error(err))
+		ResponseError(c, CodeServeBusy)
+		return
+	}
+
+	ResponseSuccess(c, data)
+}
+
+// OrderGetOneOrderItemHandler 获取一条订单记录的明细
+// @Summary 获取一条订单记录的明细
+// @Description 前端需要携带Token并传递订单号，后端返回订单明细
+// @Tags 订单相关接口
+// @Produce json
+// @param Authorization header string true "Bearer AToken&RToken"
+// @Param num path string true "订单号"
+// @Router /oms/order/one/{num} [get]
+func OrderGetOneOrderItemHandler(c *gin.Context) {
+	idStr := c.Param("num")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		zap.L().Error("获取一条订单记录的明细接口，idStr不能转换为int64类型", zap.String("idStr", idStr))
+		ResponseError(c, CodeInvalidParams)
+		return
+	}
+
+	data, err := logic.GetOneOrderItem(id)
+	if err != nil {
+		zap.L().Error("获取一条订单记录的明细失败", zap.Error(err))
+		ResponseError(c, CodeServeBusy)
+		return
+	}
+
+	ResponseSuccess(c, data)
+}
