@@ -59,7 +59,7 @@ func SendDelayOrderMess2MQ(orderNum int64) {
 				DeliveryMode: 2, // 2 表示消息持久化
 				ContentType:  "application/json",
 				Body:         dataJson,
-				Expiration:   "10000",
+				Expiration:   DelayOrderTTL,
 			},
 		)
 		if err != nil {

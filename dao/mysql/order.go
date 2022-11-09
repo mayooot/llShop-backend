@@ -225,7 +225,7 @@ func RollbackOrderStock(id int64) error {
 		}
 
 		// 回滚库存(使用Version字段解决并发下的更新问题)
-		result = tx.Model(&pojo.Sku{ID: item.SkuID}).Update("stock", gorm.Expr("stock + ?", item.ProductQuantity))
+		result = tx.Debug().Model(&pojo.Sku{ID: item.SkuID}).Update("stock", gorm.Expr("stock + ?", item.ProductQuantity))
 		if result.Error != nil || result.RowsAffected <= 0 {
 			tx.Rollback()
 			zap.L().Error("回滚商品库存失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
