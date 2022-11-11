@@ -89,7 +89,13 @@ func SetupRouter(mode string) *gin.Engine {
 		orderGroup.GET("/all", controller.OrderGetAllHandler)
 		// 获取订单明细
 		orderGroup.GET("/one/:num", controller.OrderGetOneOrderItemHandler)
+		// 删除订单
+		orderGroup.DELETE("/del/:num", controller.OrderDelOrderHandler)
+		// 支付接口
+		orderGroup.POST("/pay", controller.AlipayHandler)
 	}
+	// 支付订单回调接口
+	commonGroup.GET("/oms/order/pay/notify", controller.AlipayNotifyHandler)
 
 	// 收货地址路由组，需要鉴权
 	receiverAddressGroup := commonGroup.Group("/user/receiveraddress").Use(middleware.JWTAuthMiddleware())
@@ -104,6 +110,12 @@ func SetupRouter(mode string) *gin.Engine {
 		receiverAddressGroup.GET("/my", controller.UserReceiverAddressPersonHandler)
 		// 修改一条收货地址
 		receiverAddressGroup.PUT("/update", controller.UserReceiverAddressUpdateHandler)
+	}
+
+	// 秒杀商品路由组
+	secKillGroup := commonGroup.Group("/seckill").Use(middleware.RateLimitMiddleware(), middleware.JWTAuthMiddleware())
+	{
+		secKillGroup.GET("/sku/list", controller.SecKillAllSkuHandler)
 	}
 
 	r.NoRoute(func(c *gin.Context) {

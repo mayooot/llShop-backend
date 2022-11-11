@@ -118,3 +118,30 @@ func OrderGetOneOrderItemHandler(c *gin.Context) {
 
 	ResponseSuccess(c, data)
 }
+
+// OrderDelOrderHandler 删除一条订单记录
+// @Summary 删除一条订单记录
+// @Description 前端需要携带Token并传递订单号，后端删除订单主表记录和订单明细记录
+// @Tags 订单相关接口
+// @Produce json
+// @param Authorization header string true "Bearer AToken&RToken"
+// @Param num path string true "订单号"
+// @Router /oms/order/del/{num} [delete]
+func OrderDelOrderHandler(c *gin.Context) {
+	idStr := c.Param("num")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		zap.L().Error("删除一条订单记录接口，idStr不能转换为int64类型", zap.String("idStr", idStr))
+		ResponseError(c, CodeInvalidParams)
+		return
+	}
+
+	err = logic.DelOrder(id)
+	if err != nil {
+		zap.L().Error("删除一条订单记录失败", zap.Error(err))
+		ResponseError(c, CodeServeBusy)
+		return
+	}
+
+	ResponseSuccessWithMsg(c, "删除成功🤪", nil)
+}

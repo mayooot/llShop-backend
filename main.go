@@ -17,6 +17,7 @@ import (
 	"shop-backend/settings"
 	"shop-backend/utils/gen"
 	"shop-backend/utils/oss"
+	"shop-backend/utils/pay"
 	"shop-backend/utils/sms"
 	"syscall"
 	"time"
@@ -81,6 +82,9 @@ func main() {
 
 	// 初始化Canal
 	go canal.Init(settings.Conf.CanalConfig)
+
+	// 初始化支付模块
+	go pay.Init(settings.Conf.AliPayConfig)
 
 	// 注册路由
 	r := router.SetupRouter(settings.Conf.Mode)

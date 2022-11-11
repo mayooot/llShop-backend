@@ -45,6 +45,6 @@ const (
 	DelayOrderRoutingKey   = "delay_order_routing_key"
 
 	// DelayOrderTTL 订单在30分钟后未支付，就会进入死信队列(单位:毫秒)
-	// DelayOrderTTL = "1800000"
-	DelayOrderTTL = "60000"
+	DelayOrderTTL = "1800000"
+	// DelayOrderTTL = "60000"
 )

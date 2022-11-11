@@ -13,7 +13,7 @@ type ResponseData struct {
 }
 
 func ResponseError(c *gin.Context, code ResCode) {
-	c.JSON(http.StatusOK, &ResponseData{
+	c.JSON(http.StatusInternalServerError, &ResponseData{
 		Code: code,
 		Msg:  code.Msg(),
 		Data: nil,

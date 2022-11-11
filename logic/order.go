@@ -92,7 +92,6 @@ func CreateSubmitOrder(orderDTO *dto.Order, uid, orderNum int64) error {
 
 	// 订单超时未支付后回滚库存并将订单状态改成超时未支付
 	go rabbitmq.SendDelayOrderMess2MQ(orderNum)
-
 	return nil
 }
 
@@ -104,4 +103,9 @@ func GetAllOrder(uid int64) ([]*pojo.Order, error) {
 // GetOneOrderItem 返回一条订单的明细信息
 func GetOneOrderItem(id int64) ([]*pojo.OrderItem, error) {
 	return mysql.SelectOneOrderItem(id)
+}
+
+// DelOrder 删除一条订单记录
+func DelOrder(id int64) error {
+	return mysql.DelOrderAndItems(id)
 }

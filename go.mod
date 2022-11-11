@@ -17,6 +17,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/shopspring/decimal v1.3.1
+	github.com/smartwalle/alipay/v3 v3.1.8
 	github.com/spf13/viper v1.13.0
 	github.com/streadway/amqp v1.0.0
 	github.com/swaggo/files v0.0.0-20220728132757-551d4a08d97a
@@ -56,6 +57,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/juju/ratelimit v1.0.2 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -68,6 +70,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/samuel/go-zookeeper v0.0.0-20180130194729-c4fab1ac1bec // indirect
+	github.com/smartwalle/crypto4go v1.0.2 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect

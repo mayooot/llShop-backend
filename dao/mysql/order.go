@@ -160,6 +160,17 @@ func SelectAllOrder(uid int64) ([]*pojo.Order, error) {
 	return data, nil
 }
 
+// SelectOneOrderByUIDAndOrderNum 根据用户ID和订单号查询用户订单信息
+func SelectOneOrderByUIDAndOrderNum(uid, orderNum int64) (*pojo.Order, error) {
+	order := new(pojo.Order)
+	result := db.Model(&pojo.Order{}).Where("id = ? and user_id = ?", orderNum, uid).First(order)
+	if result.Error != nil || result.RowsAffected <= 0 {
+		zap.L().Error("根据用户ID和订单号查询用户订单信息失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
+		return nil, errors.New("根据用户ID和订单号查询用户订单信息失败")
+	}
+	return order, nil
+}
+
 // SelectOneOrderItem 返回一条订单的明细信息
 func SelectOneOrderItem(id int64) ([]*pojo.OrderItem, error) {
 	data := make([]*pojo.OrderItem, 0)
@@ -233,6 +244,31 @@ func RollbackOrderStock(id int64) error {
 		}
 	}
 	// 库存全部都回滚成功
+	tx.Commit()
+	return nil
+}
+
+// DelOrderAndItems 删除订单主表信息和对应的订单明细信息
+func DelOrderAndItems(id int64) error {
+	tx := db.Begin()
+
+	// 删除订单主表信息
+	order := &pojo.Order{ID: id}
+	result := tx.Delete(order)
+	if result.Error != nil || result.RowsAffected <= 0 {
+		tx.Rollback()
+		zap.L().Error("删除订单主表信息失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
+		return errors.New("删除订单主表信息失败")
+	}
+
+	// 删除订单明细
+	result = tx.Where("order_id = ?", id).Delete(&pojo.OrderItem{})
+	if result.Error != nil || result.RowsAffected <= 0 {
+		tx.Rollback()
+		zap.L().Error("删除订单明细失败", zap.Error(result.Error), zap.Int64("rowAffected", result.RowsAffected))
+		return errors.New("删除订单明细失败")
+	}
+
 	tx.Commit()
 	return nil
 }

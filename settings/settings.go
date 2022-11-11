@@ -23,6 +23,7 @@ type AppConfig struct {
 	*AliyunConfig   `mapstructure:"aliyun"`
 	*RabbitMQConfig `mapstructure:"rabbitmq"`
 	*CanalConfig    `mapstructure:"canal"`
+	*AliPayConfig   `mapstructure:"alipay"`
 }
 
 type LogConfig struct {
@@ -84,6 +85,12 @@ type OSSConfig struct {
 	Endpoint         string `mapstructure:"endpoint"`
 	BucketName       string `mapstructure:"bucket_name"`
 	UserAvatarPrefix string `mapstructure:"user_avatar_prefix"`
+}
+
+type AliPayConfig struct {
+	PublicKey  string `mapstructure:"public_key"`
+	PrivateKey string `mapstructure:"private_key"`
+	AppID      string `mapstructure:"app_id"`
 }
 
 func Init() (err error) {
