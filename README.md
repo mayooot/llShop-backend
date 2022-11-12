@@ -15,11 +15,12 @@
 * 🔦搜索模块
 * 🪗购物车模块
 * 💸️订单模块
+* 😮秒杀模块
 
 🪄技术栈：
 
 * 前端: Vue2 + VueX + ElementUI
-* 后端: Gin + Gorm + MySQL + Canal + Redis + RabbitMQ + Elasticsearch + MongoDB
+* 后端: Gin + Gorm + MySQL + Canal + Redis + RabbitMQ
 
 🎨第三方库:
 
@@ -27,9 +28,12 @@
 * air：程序热启动。
 * validator：参数校验。
 * ratelimit：令牌桶限流。
+* amqp：操作RabbitMQ。
 * jwt-go：前后端身份认证。
+* decimal：金额计算。
 * swaggo：生成Swagger接口文档。
 * snowflake：生成分布式唯一ID。
+* optimisticlock：gorm乐观锁插件。
 * fsnotify：监听文件或目录，配合viper使用。
 * lumberjack：配置zap，实现日志的滚动记录。
 * viper：配置文件的读取，修改时自动加载新的配置。
@@ -43,6 +47,7 @@
 │   ├───mysql               MySQL和Gorm初始化
 │   └───redis               Redis初始化
 ├───docs                    Swagger文档
+├───jmeter                  Jmeter脚本
 ├───logger                  Zap日志库配置
 ├───logic                   业务逻辑层
 ├───middleware              中间件层
@@ -60,6 +65,7 @@
 | ums_user                           | 用户信息表           |
 | usm_receiver_address               | 用户收货地址         |
 | usm_pcd_dic                        | 省市区字典表         |
+| pms_seckill_sku                    | 商品秒杀表           |
 | pms_spu                            | 商品spu表            |
 | pms_spec_param                     | 商品规格key表        |
 | pms_sku_pic                        | 商品sku图片表        |
@@ -219,3 +225,12 @@ uID:
 
   1. 666更新成功，888带着新的版本号更新成功。
   2. 修改为666的请求丢失，请求端重试，此时携带的版本号和第一次更新为666的版本号相同。这时版本号已经发生变化，所以重试的请求就会更新失败。
+
+#### 秒杀模块
+
+1. 前端限流，5秒内只提交一个请求，静态资源存放于CDN。
+2. 后端使用令牌桶算法限流，每秒产生20个令牌。抢到令牌才能继续操作，抢不到令牌最多等待5秒，5秒后抢不到视为秒杀失败。
+3. 后端Redis对UID限流，同样5秒内提交一个请求。
+4. 使用RabbitMQ保存请求队列，队列长度为库存2倍。防止前面请求预定失败，后面补上。
+5. 队列满后，后续请求之间返回秒杀结束。
+6. 消息MQ队列中的请求，使用乐观锁操作MySQL扣减库存。

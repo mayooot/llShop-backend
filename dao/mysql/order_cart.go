@@ -36,16 +36,21 @@ func SelectOneCartProductByUIDAndSkuId(userID, skuID int64, specification string
 	return cart, true
 }
 
-// UpdateCartProductByUIDAndSkuId 根据用户ID和商品skuID更新用户购物车下该商品数量
+// UpdateCartProductByUIDAndSkuId 根据用户ID和商品skuID更新用户购物车下该商品数量(使用乐观锁更新)
 func UpdateCartProductByUIDAndSkuId(userID, skuID int64, count int) error {
 	for time := 1; time <= 10; time++ {
 		// 开启事务
 		tx := db.Begin()
-		// 更新
-		result := tx.Model(&pojo.Cart{}).
+		// 1. 查询出记录
+		var cart pojo.Cart
+		result := tx.Where("user_id = ? and sku_id = ?", userID, skuID).First(&cart)
+		if result.Error != nil || result.RowsAffected <= 0 {
+			tx.Rollback()
+		}
+		// 2. 更新
+		result = tx.Model(&cart).
 			Where("user_id = ? and sku_id = ?", userID, skuID).
 			Update("count", gorm.Expr("count + ?", count))
-
 		if result.Error != nil || result.RowsAffected <= 0 {
 			tx.Rollback()
 			zap.L().Error("--------更新用户购物车商品数量失败----------", zap.Error(result.Error), zap.Int64("RowsAffected", result.RowsAffected))
@@ -55,7 +60,6 @@ func UpdateCartProductByUIDAndSkuId(userID, skuID int64, count int) error {
 			break
 		}
 	}
-
 	return nil
 }
 

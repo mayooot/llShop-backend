@@ -42,6 +42,7 @@ const (
 	CodeOrderNumISNotExistOrExpired
 	CodeCreateSubmitOrderSuccess
 	CodeToManyRequest
+	CodeSecKillFinished
 )
 
 // map字典 K: 错误码	V: 错误信息
@@ -85,6 +86,7 @@ var codeMsgMap = map[ResCode]string{
 	CodeOrderNumISNotExistOrExpired:   "请刷新预提交订单🪬",
 	CodeCreateSubmitOrderSuccess:      "订单提交成功🐔",
 	CodeToManyRequest:                 "当前活动太火爆啦，等会再试试吧🍻",
+	CodeSecKillFinished:               "秒杀活动已结束，谢谢参与😮",
 }
 
 // Msg 为ResCode注册一个Msg方法，负责返回错误码对应的错误信息

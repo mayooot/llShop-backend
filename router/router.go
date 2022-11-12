@@ -113,11 +113,21 @@ func SetupRouter(mode string) *gin.Engine {
 	}
 
 	// 秒杀商品路由组
-	secKillGroup := commonGroup.Group("/seckill").Use(middleware.RateLimitMiddleware(), middleware.JWTAuthMiddleware())
+	secKillGroup := commonGroup.Group("/seckill").Use(middleware.RateLimitMiddleware())
 	{
+		// 获取所有正在秒杀的商品
 		secKillGroup.GET("/sku/list", controller.SecKillAllSkuHandler)
+		// 购买秒杀商品
+		secKillGroup.POST("/buy", controller.SecKillBuyHandler).Use(middleware.RateLimitRedisMiddleware())
 	}
 
+	// 秒杀商品路由组 for test
+	// 使用RateLimit、Redis限流中间件
+	secKillTestGroup := commonGroup.Group("/seckill/test").Use(middleware.RateLimitMiddleware(), middleware.RateLimitRedisMiddleware())
+	{
+		// 购买秒杀商品
+		secKillTestGroup.POST("/buy", controller.SecKillBuyHandler)
+	}
 	r.NoRoute(func(c *gin.Context) {
 		controller.ResponseErrorWithMsg(c, http.StatusBadRequest, gin.H{"msg": "404"})
 	})

@@ -68,6 +68,14 @@ func NewDelayOrderMQ() *RabbitMQ {
 	}
 }
 
+// NewSecKillMQ 创建一个用于保存用户秒杀请求的新的操作RabbitMQ的对象
+func NewSecKillMQ() *RabbitMQ {
+	return &RabbitMQ{
+		exchangeName: SecKillReqExchangeName,
+		exchangeType: SecKillReqExchangeType,
+	}
+}
+
 // 准备RabbitMQ的交换机
 func (mq *RabbitMQ) prepareExchange() error {
 	// 声明交换机
@@ -146,6 +154,14 @@ func (mq *RabbitMQ) listen(receiver Receiver) {
 		// 如果为订单相关操作的队列。指定死信队列相关信息
 		args["x-dead-letter-exchange"] = DelayOrderExchangeName
 		args["x-dead-letter-routing-key"] = DelayOrderRoutingKey
+	}
+
+	if queueName == SecKillReqQueueName {
+		// 如果为保存秒杀请求的队列。
+		// 最大消息为秒杀商品库存的两倍
+		args["x-max-length"] = SecKillStore
+		// 当队列满时，拒绝新的请求
+		args["x-overflow"] = SecKillOverflow
 	}
 
 	// 声明Queue

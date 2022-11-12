@@ -3,8 +3,8 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/juju/ratelimit"
-	"log"
 	"shop-backend/controller"
+	"shop-backend/utils/gen"
 	"time"
 )
 
@@ -17,12 +17,12 @@ func RateLimitMiddleware() func(c *gin.Context) {
 		// 如果取不到令牌，最大等待5秒。如果5秒后仍然没有取到令牌，则中断本次请求
 		_, ok := bucket.TakeMaxDuration(1, time.Second*5)
 		if !ok {
-			controller.ResponseError(c, controller.CodeToManyRequest)
-			log.Print("秒杀失败")
+			controller.ResponseBadError(c, controller.CodeToManyRequest)
 			c.Abort()
 			return
 		}
 		// 成功取到令牌就放行
 		c.Next()
+		c.Set("uid", gen.GenSnowflakeID())
 	}
 }

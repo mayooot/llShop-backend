@@ -1,0 +1,62 @@
+name: "shop-backend"
+mode: "dev"
+port: 9090
+version: "v0.1.0"
+start_time: "2022-10-12"
+machine_id: 1
+
+user:
+  width: 4 # 手机验证码位数
+  min_pass_len: 8
+  max_pass_len: 30
+
+log:
+  level: "debug"
+  fileName: "shop-backend.log"
+  max_size: 200
+  max_age: 30
+  max_backups: 7
+
+mysql:
+  host: "#"
+  port: 3306
+  user: "#"
+  password: "#"
+  dbname: "shop"
+  max_open_conns: 20
+  max_idel_conns: 10
+
+redis:
+  host: "#"
+  port: 6379
+  password: "#"
+  db: 0
+  pool_size: 100
+
+rabbitmq:
+  host: "#"
+  port: 5672
+  user: "#"
+  password: "#"
+
+canal:
+  host: "#"
+  port: 11111
+  user: "#"
+  password: "#"
+  destination: "example"
+
+aliyun:
+  access_key_id: "#"
+  access_key_secret: "#"
+  access_key_id2: "#"
+  access_key_secret2: "#"
+  oss:
+    endpoint: "#"
+    bucket_name: "#"
+    user_avatar_prefix: "#"
+
+alipay:
+  public_key: "#"
+  private_key: "#"
+  app_id: "#"

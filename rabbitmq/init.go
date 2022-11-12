@@ -11,6 +11,8 @@ var rabbitmqChannel *amqp.Channel
 var rabbitmqChannel2 *amqp.Channel
 var rabbitmqChannel3 *amqp.Channel
 var rabbitmqChannel4 *amqp.Channel
+
+var rabbitmqChannel5 *amqp.Channel
 var err error
 
 // Init 初始化RabbitMQ
@@ -44,6 +46,11 @@ func Init(cfg *settings.RabbitMQConfig) {
 	}
 
 	rabbitmqChannel4, err = rabbitmqConn.Channel()
+	if err != nil {
+		panic("打开Channel失败: " + err.Error())
+	}
+
+	rabbitmqChannel5, err = rabbitmqConn.Channel()
 	if err != nil {
 		panic("打开Channel失败: " + err.Error())
 	}
@@ -105,6 +112,17 @@ func Init(cfg *settings.RabbitMQConfig) {
 	delayOrder.RegisterReceiver(delayOrderReceiver)
 	// 启动
 	go delayOrder.Start()
+
+	// 初始化秒杀商品相关的RabbitMQ实体对象
+	secKill := NewSecKillMQ()
+	// 将管道绑定到MQ对象上
+	secKill.channel = rabbitmqChannel5
+	// 创建接受数据库变更信息的接收者
+	secKillReceiver := NewSecKillReceiver(SecKillReqQueueName, SecKillReqRoutingKey)
+	// 将接收者绑定到RabbitMQ实体对象
+	secKill.RegisterReceiver(secKillReceiver)
+	// 启动
+	go secKill.Start()
 }
 
 // Destroy 销毁RabbitMQ连接和通道

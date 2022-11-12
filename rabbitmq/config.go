@@ -48,3 +48,16 @@ const (
 	DelayOrderTTL = "1800000"
 	// DelayOrderTTL = "60000"
 )
+
+// 存入用户秒杀商品请求的消息队列配置
+const (
+	SecKillReqExchangeName = "seckill_exchange"
+	SecKillReqExchangeType = "direct"
+	SecKillReqQueueName    = "seckill_queue"
+	SecKillReqRoutingKey   = "seckill_routing_key"
+
+	// SecKillStore 请求保存队列，队列长度为库存的两倍。防止前面预定失败，后面继续补上
+	SecKillStore = 200
+	// SecKillOverflow 队列满了之后的拒绝策略为直接拒绝发布新的消息
+	SecKillOverflow = "reject-publish"
+)
